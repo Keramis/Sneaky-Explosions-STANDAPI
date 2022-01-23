@@ -169,8 +169,10 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     menu.divider(menu.player_root(pid), scriptName)
     local playerMain = menu.list(menu.player_root(pid), scriptName, {"SneakyE", "SneakyExplodes"}, "")
     menu.divider(playerMain, scriptName)
-    local playerSuicides = menu.list(playerMain, "Suicides", {}, "")
-    local playerDebugFeats = menu.list(playerMain, "Debug Features", {}, "")
+    local playerSuicides = menu.list(playerMain, "Suicides", {}, "") --suicides parent
+    local playerTools = menu.list(playerMain, "Tools", {}, "") --tools parent
+    local playerOtherTrolling = menu.list(playerMain, "Other Trolling", {}, "")
+    
     
     --suicides
 
@@ -235,25 +237,17 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         SE_explodeDelay = val
     end)
 
-    menuAction(playerMain, "Spawn Flare on Player", {"flare"}, "", function()
-        local playerCoords = ENTITY.GET_ENTITY_COORDS(PLAYER.GET_PLAYER_PED(pid), true)
-        local playerPed = PLAYER.GET_PLAYER_PED(pid)
-        local myPlayerPed = getLocalPed()
-
-        SE_ShootBullet(playerCoords['x'], playerCoords['y'], playerCoords['z'], playerCoords['x'], playerCoords['y'], playerCoords['z'], 0, true, 1198879012, myPlayerPed, false, true, 0)
-    end)
-
-    menuToggleLoop(playerMain, "Toss Player Around", {"tossplayer", "toss", "ragtoss"}, "Loops no-damage explosions on the player. They will be invisible if you set them as such.", function()
+    menuToggleLoop(playerOtherTrolling, "Toss Player Around", {"tossplayer", "toss", "ragtoss"}, "Loops no-damage explosions on the player. They will be invisible if you set them as such.", function()
         local playerCoords = ENTITY.GET_ENTITY_COORDS(PLAYER.GET_PLAYER_PED(pid), true)
 
         SE_add_explosion(playerCoords['x'], playerCoords['y'], playerCoords['z'] + SE_toss_z, 1, 1, SEisExploAudible, SEisExploInvis, 0, true)
     end)
     -- z slider for the toss player loop
-    menu.click_slider(playerMain, "Z Relative", {}, "tosszrel", -100, 100, 0, 1, function(zval)
+    menu.click_slider(playerOtherTrolling, "Z Relative", {"tosszrel"}, "Z-relative of 'toss player'. E.g. negative is below, positive is above.", -100, 100, 0, 1, function(zval)
         SE_toss_z = zval
     end)
 
-    menuAction(playerMain, "God Check", {"godcheck"}, "", function()
+    menuAction(playerTools, "God Check", {"godcheck"}, "", function()
         if (players.is_godmode(pid) and not players.is_in_interior(pid)) then
             util.toast(PLAYER.GET_PLAYER_NAME(pid) .. " is in godmode!")
         elseif (players.is_in_interior(pid)) then
@@ -263,6 +257,8 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
+
+    local playerDebugFeats = menu.list(playerMain, "Debug Features", {}, "") --debug parent
     menuAction(playerDebugFeats, "Spawn Ped (help yo mama crash)", {}, "", function()
         local playerCoords = getEntityCoords(getPlayerPed(pid))
         local hash = util.joaat("A_F_M_BodyBuild_01")
