@@ -540,35 +540,27 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-    --preload
-    SE_pDelGunRadius = 3
 
-    menuToggleLoop(playerWeapons, "Delete Gun", {"pdelgun"}, "Gives the player a delete gun.", function ()
+   --[[ menuToggleLoop(playerWeapons, "Kick gun", {"pkickgun"}, "Gives the player a delete gun.", function ()
         local pped = getPlayerPed(pid)
         if PED.IS_PED_SHOOTING(pped) then
-            local allocCord = memory.alloc(24)
+            local allocCord = memory.alloc()
             local junk = WEAPON.GET_PED_LAST_WEAPON_IMPACT_COORD(pped, allocCord)
             local coord = memory.read_vector3(allocCord)
             if coord.x == 0 and coord.y == 0 and coord.z == 0 then
                 --check if the shot was shot into the air, and if it was, do nothing.
-                if SE_Notifications then
-                    util.toast("0.0.0 coords.")
-                end
             else
                 if SE_Notifications then
                     util.toast(coord.x .. " " .. coord.y .. " " .. coord.z)
                 end
-                MISC.CLEAR_AREA(coord.x, coord.y, coord.z, SE_pDelGunRadius, true, false, false, false)
-                MISC.CLEAR_AREA_OF_VEHICLES(coord.x, coord.y, coord.z, SE_pDelGunRadius, false, false, false, false, false, false)
+                local ourEntity = FIRE._GET_ENTITY_INSIDE_EXPLOSION_SPHERE(1, coord.x, coord.y, coord.z, 5)
+                if ENTITY.IS_ENTITY_A_PED(ourEntity) then
+                    util.toast("Valid ped.")
+                end
             end
+            memory.free(allocCord)
         end
-    end)
-
-    menu.slider(playerWeapons, "Radius of Deletion", {"praddel"}, "Sets the radius of the delete gun. Smaller radiuses usually don't work on bigger vehicles.", 1, 10000, 3, 1, function(value)
-        SE_pDelGunRadius = value
-        wait()
-    end)
-
+    end)]]
     -----------------------------------------------------------------------------------------------------------------------------------
 
     --other trolling
