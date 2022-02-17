@@ -284,36 +284,6 @@ menu.divider(mFunFeats, "Extinciton Gun")
 MarkedForExt = {}
 MarkedForExtCount = 1
 
-menuToggleLoop(mFunFeats, "Mark for Extinction", {}, "", function ()
-    local localPed = getLocalPed()
-    if PED.IS_PED_SHOOTING(localPed) then
-        local point = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), point)
-        if isEntFound then
-            local entt =  memory.read_int(point)
-            if ENTITY.IS_ENTITY_A_PED(entt) and PED.IS_PED_IN_ANY_VEHICLE(entt) then
-                --checks if ped is in a vehicle, because you need to delete both the ped and the vehicle.
-                --the GET_ENTITY gets the ped INSIDE the vehicle, so we assign a new variable to the vehicle itself.
-                MarkedForExt[MarkedForExtCount] = entt
-                MarkedForExtCount = MarkedForExtCount + 1
-                local pedveh = PED.GET_VEHICLE_PED_IS_IN(entt, false) -- returns "vehicle", not entity.
-                MarkedForExt[MarkedForExtCount] = pedveh
-                MarkedForExtCount = MarkedForExtCount + 1
-                if SE_Notifications then
-                    util.toast("Marked for extinction!" .. " Index " .. MarkedForExtCount - 2 .. " and " .. MarkedForExtCount - 1)
-                end
-            else
-                MarkedForExt[MarkedForExtCount] = entt
-                if SE_Notifications then
-                    util.toast("Marked for extinction!" .. " Index " .. MarkedForExtCount)
-                end
-                MarkedForExtCount = MarkedForExtCount + 1
-            end
-        end
-        memory.free(point)
-    end
-end)
-
 menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
     local localPed = getLocalPed()
     if PED.IS_PED_SHOOTING(localPed) then
