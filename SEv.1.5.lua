@@ -856,22 +856,6 @@ menuToggleLoop(debugFeats, "Get V3 Of Entity", {"entcoords"}, "Toasts the coodin
     end
 end)
 
-menuToggleLoop(debugFeats, "Set heading", {}, "", function ()
-    local pp = getLocalPed()
-    if PED.IS_PED_SHOOTING(pp) then
-        local pointer = memory.alloc(4)
-        local found = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
-        if found then
-            local ent = memory.read_int(pointer)
-            for i = -180, 180, 1 do
-                ENTITY.SET_ENTITY_HEADING(ent, i)
-                wait(1)
-            end
-        end
-        memory.free(pointer)
-    end
-end)
-
 menuAction(debugFeats, "Get Heading", {}, "", function ()
     local pp = getLocalPed()
     util.toast(ENTITY.GET_ENTITY_HEADING(pp))
@@ -934,18 +918,8 @@ menuToggleLoop(debugFeats, "Get player name from shot", {}, "", function ()
     end
 end)
 
-menuToggleLoop(debugFeats, "RGB Xenon Lights", {}, "", function ()
-    local pped = getLocalPed()
-    local pedveh = PED.GET_VEHICLE_PED_IS_IN(pped, false)
-    if PED.IS_PED_IN_ANY_VEHICLE(pped, false) then
-        VEHICLE.TOGGLE_VEHICLE_MOD(pedveh, 22, true)
-        for i = 0, 12, 1 do
-            VEHICLE._SET_VEHICLE_XENON_LIGHTS_COLOR(pedveh, i)
-            wait(500)
-        end
-    else
-        util.toast("Get your ass in a vehicle")
-    end
+local toolFeats = menu.list(menuroot, "Tools", {}, "", function ()
+    
 end)
 
 menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
@@ -1088,6 +1062,22 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     -----------------------------------------------------------------------------------------------------------------------------------
 
     --other trolling
+
+    menuAction(playerOtherTrolling, "PP", {}, "", function ()
+        local ped = getPlayerPed(pid)
+        local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 0, 2, 0)
+        local pheading = ENTITY.GET_ENTITY_HEADING(ped)
+        local hash = 309416120
+        requestModel(hash)
+        while not hasModelLoaded(hash) do wait() end
+        local a1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z - 1, true, true, true)
+        ENTITY.SET_ENTITY_HEADING(a1, pheading + 90)
+        local b1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z + 1, true, true, true)
+        ENTITY.SET_ENTITY_HEADING(b1, pheading + 90)
+        wait(500)
+        entities.delete_by_handle(a1)
+        entities.delete_by_handle(b1)
+    end)
 
     menu.divider(playerOtherTrolling, "Toss Features")
     local ptossf = menu.list(playerOtherTrolling, "Toss Features", {}, "")
