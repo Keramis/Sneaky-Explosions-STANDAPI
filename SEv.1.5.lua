@@ -167,6 +167,10 @@ local function netIt(entity, playerID)
         ENTITY.SET_ENTITY_VISIBLE(entity, true, 0)
     else
         ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
+        wait()
+        ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
+        wait()
+        ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
     end
 end
 
@@ -202,6 +206,10 @@ local function netItAll(entity)
     if BA_visible then
         ENTITY.SET_ENTITY_VISIBLE(entity, true, 0)
     else
+        ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
+        wait()
+        ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
+        wait()
         ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
     end
 end
@@ -673,8 +681,8 @@ local function pizzaCAll()
     end
 end
 
-Pizzaall = menuAction(lobbyFeats, "Pizza Crash Everone", {"pizzaall"}, "Blocked by most menus.", function ()
-    menu.show_warning(Pizzaall, 1, "This will crash everyone with pizza. Did you mean to click this?", pizzaCAll)
+Pizzaall = menuAction(lobbyFeats, "Black Plague Crash All", {"plagueall"}, "Blocked by most menus.", function ()
+    menu.show_warning(Pizzaall, 1, "This will crash everyone with the plague. Did you mean to click this?", pizzaCAll)
 end)
 
 
@@ -918,8 +926,11 @@ menuToggleLoop(debugFeats, "Get player name from shot", {}, "", function ()
     end
 end)
 
-local toolFeats = menu.list(menuroot, "Tools", {}, "", function ()
-    
+local toolFeats = menu.list(menuroot, "Tools", {}, "")
+local disableNumKeys = menu.list(toolFeats, "Disable Number Keys", {}, "")
+
+menuToggleLoop(disableNumKeys, "Disable Key 1", {}, "", function ()
+    PAD.DISABLE_CONTROL_ACTION(2, 157, true) --KEY [1], INPUT_SELECT_WEAPON_UNARMED
 end)
 
 menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
@@ -1394,7 +1405,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-    menuAction(ptoxic, "Skidded Pizza Crash", {"byepizza"}, "Skidded pizza crash from 2take1. Works on very few menus, but works on legits.", function ()
+    menuAction(ptoxic, "Plague Crash", {"byeplague"}, "Works on very few menus, but works on legits.", function ()
         for i = 1, 10 do
         local cord = getEntityCoords(getPlayerPed(pid))
         requestModel(-930879665)
