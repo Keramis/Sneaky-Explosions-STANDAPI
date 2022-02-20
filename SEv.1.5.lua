@@ -952,7 +952,7 @@ menuToggleLoop(toolFeats, "Draw Entity Pool", {"drawentpool"}, "", function ()
     local objpool = entities.get_all_objects_as_pointers()
     directx.draw_text(0.0, 0.07, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     local pickpool = entities.get_all_pickups_as_pointers()
-    directx.draw_text(0.0, 0.09, "objects: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    directx.draw_text(0.0, 0.09, "pickups: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
 end)
 
 menu.divider(toolFeats, "Settings")
