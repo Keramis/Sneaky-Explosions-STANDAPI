@@ -869,7 +869,7 @@ menuAction(debugFeats, "Get Heading", {}, "", function ()
     util.toast(ENTITY.GET_ENTITY_HEADING(pp))
 end)
 
-menuAction(debugFeats, "BLOCK TESTING", {}, "", function ()
+--[[menuAction(debugFeats, "BLOCK TESTING", {}, "", function ()
     local hash = 309416120
     requestModel(hash)
     while not hasModelLoaded(hash) do wait() end
@@ -901,7 +901,7 @@ menuAction(debugFeats, "BLOCK TESTING", {}, "", function ()
     ENTITY.SET_ENTITY_HEADING(d1_2, 2)
 
     noNeedModel(hash)
-end)
+end)]]
 
 menuToggleLoop(debugFeats, "Get player name from shot", {}, "", function ()
     local pped = getPlayerPed(players.user())
