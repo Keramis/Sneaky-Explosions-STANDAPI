@@ -90,7 +90,7 @@ require("natives-1640181023")
 
 util.keep_running()
 
-local scriptName = "SneakyE V.1.1"
+local scriptName = "SneakyE V.1.5"
 
 local menuroot = menu.my_root()
 local menuAction = menu.action
@@ -927,10 +927,37 @@ menuToggleLoop(debugFeats, "Get player name from shot", {}, "", function ()
 end)
 
 local toolFeats = menu.list(menuroot, "Tools", {}, "")
-local disableNumKeys = menu.list(toolFeats, "Disable Number Keys", {}, "")
 
-menuToggleLoop(disableNumKeys, "Disable Key 1", {}, "", function ()
-    PAD.DISABLE_CONTROL_ACTION(2, 157, true) --KEY [1], INPUT_SELECT_WEAPON_UNARMED
+menuAction(toolFeats, "Teleport high up", {"tphigh"}, "Teleports you very high up, for testing parachutes/falldamage.", function ()
+    local pcoords = getEntityCoords(getLocalPed())
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pcoords.x, pcoords.y, pcoords.z + 1000, false, false, false)
+end)
+
+--preload
+DR_TXT_SCALE = 0.5
+
+
+menuToggleLoop(toolFeats, "Draw position", {"drawpos"},  "", function ()
+    local pos = getEntityCoords(getLocalPed())
+    local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+    directx.draw_text(0.0, 0.0, "x: " .. pos.x .. " // y: " .. pos.y .. " // z: " .. pos.z, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+end)
+
+menuToggleLoop(toolFeats, "Draw Entity Pool", {"drawentpool"}, "", function ()
+    local vehpool = entities.get_all_vehicles_as_pointers()
+    local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+    directx.draw_text(0.0, 0.03, "vehicles: " .. #vehpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    local pedpool = entities.get_all_peds_as_pointers()
+    directx.draw_text(0.0, 0.05, "peds: " .. #pedpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    local objpool = entities.get_all_objects_as_pointers()
+    directx.draw_text(0.0, 0.07, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    local pickpool = entities.get_all_pickups_as_pointers()
+    directx.draw_text(0.0, 0.09, "objects: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+end)
+
+menu.divider(toolFeats, "Settings")
+menu.slider(toolFeats, "Text Size (/10)", {"drscale"}, "Sets the scale of the text to the value you assign, divided by 10. This is because it only takes integer values.", 1, 50, 5, 1, function (value)
+    DR_TXT_SCALE = value / 10
 end)
 
 menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
@@ -971,7 +998,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     local playerSuicides = menu.list(playerMain, "Suicides", {}, "") --suicides parent
     local playerWeapons = menu.list(playerMain, "Weapons", {}, "") -- weapons parent
     local playerTools = menu.list(playerMain, "Tools", {}, "") --tools parent
-    local playerOtherTrolling = menu.list(playerMain, "Other Trolling", {}, "")
+    local playerOtherTrolling = menu.list(playerMain, "Trolling", {}, "")
     
     
     --suicides
@@ -1074,7 +1101,9 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     --other trolling
 
-    menuAction(playerOtherTrolling, "PP", {}, "", function ()
+    menu.divider(playerOtherTrolling, "Vehicle Trolling")
+    local vehicletrolling = menu.list(playerOtherTrolling, "Vehicle trolling", {}, "")
+    menuAction(vehicletrolling, "Place wall in front of player", {}, "Places walls in front of player. Delete after half a second. Use this when they are driving forward for EPIC TROLLING.", function ()
         local ped = getPlayerPed(pid)
         local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 0, 2, 0)
         local pheading = ENTITY.GET_ENTITY_HEADING(ped)
@@ -1082,8 +1111,10 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         requestModel(hash)
         while not hasModelLoaded(hash) do wait() end
         local a1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z - 1, true, true, true)
+        ENTITY.SET_ENTITY_VISIBLE(a1, false)
         ENTITY.SET_ENTITY_HEADING(a1, pheading + 90)
         local b1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z + 1, true, true, true)
+        ENTITY.SET_ENTITY_VISIBLE(b1, false)
         ENTITY.SET_ENTITY_HEADING(b1, pheading + 90)
         wait(500)
         entities.delete_by_handle(a1)
