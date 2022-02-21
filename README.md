@@ -1,2 +1,3 @@
 # Sneaky-Explosions-STANDAPI
-Very Early Alpha/Beta.
+
+A utility/trolling script for Stand and the Stand LUA API.
