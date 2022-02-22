@@ -1173,6 +1173,24 @@ menuToggle(killAuraSettings, "Delete peds after shooting?", {"kasilent"}, "If to
     end
 end)
 
+menuToggleLoop(killAuraSettings, "Draw peds in radius", {"kadrawpeds"}, "If toggled on, will draw the number of peds in the selected radius. Does not need KillAura to be enabled.", function ()
+    local dcount = 1
+    local dtable = {}
+    local ourcoords = getEntityCoords(getLocalPed())
+    --
+    local pedPointers = entities.get_all_peds_as_pointers()
+    for i = 1, #pedPointers do
+        local v3 = entities.get_position(pedPointers[i])
+        local vdist = MISC.GET_DISTANCE_BETWEEN_COORDS(ourcoords.x, ourcoords.y, ourcoords.z, v3.x, v3.y, v3.z, true)
+        if vdist <= KA_Radius then
+            dtable[dcount] = entities.pointer_to_handle(pedPointers[i])
+            dcount = dcount + 1
+        end
+    end
+    local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+    directx.draw_text(0.0, 0.11, "Peds in radius of >> " .. KA_Radius .. " << " .. #dtable, ALIGN_TOP_LEFT, 0.6, cc, false)
+end)
+
 menuAction(killAuraSettings, "Spawn test peds", {}, "", function ()
     local hash = joaat("S_M_Y_Swat_01")
     local coords = getEntityCoords(getLocalPed())
@@ -1787,13 +1805,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             util.toast("triggered Bro hug lag on " .. NETWORK.NETWORK_PLAYER_GET_NAME(pid))
         end
     end)
-
-    menuAction(ptoxic, "Bro bruh momment", {}, "", function ()
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {1456985457, math.random(-1, 1), math.random(-1, 1), 0, 6812})
-        end
-    end)
-
 
     menuAction(ptoxic, "Bro Hug Leave", {}, "Uses every possible known script event to forcibly remove the player. This may not work on modders with good menus.", function ()
         for n = -100, 100 do
