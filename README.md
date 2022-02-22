@@ -12,7 +12,7 @@ Features list:
 -Set explosion to audible/inaudible
 
 
----Lobby features--
+------>Lobby features<------
 
 
 --Explosion features
@@ -49,7 +49,7 @@ Features list:
 ---Slower, but better AIO (toggleable, uses more script events in the AIO kick to make it better, but slower)
 
 
----Fun features---
+------>Fun features<------
 
 
 --Sticky bomb Gun
@@ -93,7 +93,7 @@ Features list:
 ---Repopulate area (not sure if this actually works or not, it's one native call that should work, theoretically.)
 
 
----Debug features---
+------>Debug features<------
 
 --Get V3 coords (toasts your current v3 coords)
 
@@ -108,7 +108,7 @@ Features list:
 --Get player name from shot (toasts if it found an entity, if it was a ped, and, if it was a player, toasts PID and name.)
 
 
----Tools features---
+------>Tools features<------
 
 --Teleport high up
 
