@@ -1799,60 +1799,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menu.divider(ptoxic, "Bro Hug")
 
-    menuAction(ptoxic, "Bro hug lag", {}, "", function ()
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {27382701, i, math.random(-5000, 5000), math.random(-5000, 5000), math.random(-1, 1)})
-            util.toast("triggered Bro hug lag on " .. NETWORK.NETWORK_PLAYER_GET_NAME(pid))
-        end
-    end)
-
-    menuAction(ptoxic, "Bro Hug Leave", {}, "Uses every possible known script event to forcibly remove the player. This may not work on modders with good menus.", function ()
-        for n = -100, 100 do
-            for i = -60, 60 do
-                util.trigger_script_event(1 << pid, {0x39624029, n, 623656, i, 73473741, -7, 856844, -51251, 856844})
-            end
-        end
-        util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-        util.trigger_script_event(1 << pid, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
-        util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-        for i = -28, 28 do
-            for n = -1, 1 do
-                for a = -1, 1 do
-                    util.trigger_script_event(1 << pid, {1445703181, i, n, a})
-                end
-            end
-        end
-        for i = -28, 28 do
-            for n = -100, 100 do
-                for a = -100, 100 do
-                    util.trigger_script_event(1 << pid, {-1782442696, i, n, a})
-                end
-            end
-        end
-        for i = -1100, -9988 do
-            util.trigger_script_event(1 << pid, {2002459655, -1000000, i, -100000000})
-        end
-        for i = -100, 100 do
-            for n = 30, -30 do
-                util.trigger_script_event(1 << pid, {911179316, i, n, -75, -59, 85, 82})
-            end
-        end
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {-65587051, i, -1, -1})
-        end
-        util.trigger_script_event(1 << pid, {951147709, pid, 1000000, nil, nil}) 
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {-1949011582, i, 1518380048})
-        end
-        for i = -100, 100 do
-            for n = -100, 100 do
-                util.trigger_script_event(1 << pid, {1445703181, 28, i, n})
-            end
-        end
-    end)
-
-
-    menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player.", function ()
+    menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player, may not work on modders.", function ()
         for i = -1, 1 do
             for n = -1, 1 do
                 util.trigger_script_event(1 << pid, {-65587051, 28, i, n})
@@ -1870,7 +1817,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
     end)
 
-    menuAction(ptoxic, "AIO death.", {"aiok"}, "", function ()
+    menuAction(ptoxic, "AIO death.", {"aiok"}, "Uses every single goddamn known script event to kick a player. 'Slower, but better AIO' makes this slower, but it may work on more people. Tested for bugs, works.", function ()
         util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
         util.trigger_script_event(1 << pid, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
         wait(10) 
