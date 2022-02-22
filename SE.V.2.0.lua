@@ -1056,7 +1056,99 @@ menuAction(mFunFeats, "Clear Extinct List", {}, "", function ()
     MarkedForExtCount = 1
 end)
 
+menu.divider(mFunFeats, "Kill Aura")
 
+--preload
+KA_Radius = 20
+KA_Blame = true
+KA_Players = false
+
+menuAction(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally players, optionally friends, in a raidus.", function ()
+    local tKCount = 1
+    local toKill = {}
+    local ourcoords = getEntityCoords(getLocalPed())
+    local ourped = getLocalPed()
+    local weaponhash = 177293209 -- heavy sniper mk2 hash
+    --
+    local pedPointers = entities.get_all_peds_as_pointers()
+    local pedLocations = {}
+    for i = 1, #pedPointers do
+        local v3 = entities.get_position(pedPointers[i])
+        local vdist = MISC.GET_DISTANCE_BETWEEN_COORDS(ourcoords.x, ourcoords.y, ourcoords.z, v3.x, v3.y, v3.z, true)
+        if vdist <= KA_Radius then
+            toKill[tKCount] = entities.pointer_to_handle(pedPointers[i])
+            tKCount = tKCount + 1
+        end
+    end
+    --util.toast("Tokill: " .. #toKill)
+    for i = 1, #toKill do
+        if not PED.IS_PED_A_PLAYER(toKill[i]) then
+            if not PED.IS_PED_DEAD_OR_DYING(toKill[i]) then
+                if PED.IS_PED_IN_ANY_VEHICLE(toKill[i]) then
+                    if SE_Notifications then
+                        util.toast("Ped with index " .. i .. " is in a vehicle.")
+                    end
+                    local veh = PED.GET_VEHICLE_PED_IS_IN(toKill[i], false)
+                    local pedcoords = getEntityCoords(toKill[i])
+                    if KA_Blame then
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 1, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 1, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                    else
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 1, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 1, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                    end
+                else
+                    if SE_Notifications then
+                        util.toast("Ped with index " .. i .. " is in range.")
+                    end
+                    local pedcoords = getEntityCoords(toKill[i])
+                    if KA_Blame then
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, false, -1)
+                    else
+                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+menu.slider(mFunFeats, "KillAura Radius", {"karadius"}, "Radius for killaura.", 1, 100, 20, 1, function (value)
+    KA_Radius = value
+end)
+
+menuToggle(mFunFeats, "Blame Killaura on Me?", {"kablame"}, "If toggled off, bullets will not be blamed on you.", function (toggle)
+    if toggle then
+        KA_Blame = true
+    else
+        KA_Blame = false
+    end
+end, true)
+
+menuToggle(mFunFeats, "Target Players?", {"kaplayers"}, "If toggled off, will only target peds.", function (toggle)
+    if toggle then
+        KA_Players = true
+    else
+        KA_Players = false
+    end
+end)
+
+menuAction(mFunFeats, "Spawn test peds", {}, "", function ()
+    local hash = joaat("S_M_Y_Swat_01")
+    local coords = getEntityCoords(getLocalPed())
+    requestModel(hash)
+    while not hasModelLoaded(hash) do wait() end
+    PED.CREATE_PED(24, hash, coords.x, coords.y, coords.z, 0, true, false)
+    noNeedModel(hash)
+end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
