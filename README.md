@@ -40,8 +40,6 @@ Features list:
 
 --Removes features
 
----Remove all (uses most script events)
-
 ---Freemode death all (uses freemode death script events)
 
 ---AIO kick all (uses all known script events)
