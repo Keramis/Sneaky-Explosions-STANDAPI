@@ -727,50 +727,6 @@ end)
 
 local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
 
-menuAction(lobbyremove, "Remove all.", {}, "", function ()
-    for n = -100, 100 do
-        for i = -60, 60 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {0x39624029, n, 623656, i, 73473741, -7, 856844, -51251, 856844})
-        end
-    end
-    util.trigger_script_event(util.get_session_players_bitflag(), {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-    for i = -28, 28 do
-        for n = -1, 1 do
-            for a = -1, 1 do
-                util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, i, n, a})
-            end
-        end
-    end
-    for i = -28, 28 do
-        for n = -100, 100 do
-            for a = -100, 100 do
-                util.trigger_script_event(util.get_session_players_bitflag(), {-1782442696, i, n, a})
-            end
-        end
-    end
-    for i = -1100, -9988 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {2002459655, -1000000, i, -100000000})
-    end
-    for i = -100, 100 do
-        for n = 30, -30 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {911179316, i, n, -75, -59, 85, 82})
-        end
-    end
-    for i = -100, 100 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {-65587051, i, -1, -1})
-    end
-    util.trigger_script_event(util.get_session_players_bitflag(), {951147709, pid, 1000000, nil, nil}) 
-    for i = -100, 100 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {-1949011582, i, 1518380048})
-    end
-    for i = -100, 100 do
-        for n = -100, 100 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, 28, i, n})
-        end
-    end
-end)
 
 menuAction(lobbyremove, "Freemode Death All.", {}, "", function ()
     for i = -1, 1 do
