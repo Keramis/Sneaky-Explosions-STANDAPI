@@ -725,6 +725,28 @@ end)
 
 local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
 
+<<<<<<< HEAD
+=======
+
+menuAction(lobbyremove, "Freemode Death All.", {}, "", function ()
+    for i = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(util.get_session_players_bitflag(), {-65587051, 28, i, n})
+        end
+    end
+    for i = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, 28, i, n})
+        end
+    end
+    wait(100)
+    util.trigger_script_event(util.get_session_players_bitflag(), {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+    util.trigger_script_event(util.get_session_players_bitflag(), {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+    util.trigger_script_event(util.get_session_players_bitflag(), {2002459655, -1000000, -10000, -100000000})
+    util.trigger_script_event(util.get_session_players_bitflag(), {911179316, -38, -30, -75, -59, 85, 82})
+end)
+
+>>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
 TXC_SLOW = false
 
 menuAction(lobbyremove, "AIO Kick All.", {}, "", function ()
@@ -1734,6 +1756,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menu.divider(ptoxic, "Bro Hug")
 
+<<<<<<< HEAD
     menuAction(ptoxic, "Bro hug lag", {}, "", function ()
         for i = -100, 100 do
             util.trigger_script_event(1 << pid, {27382701, i, math.random(-5000, 5000), math.random(-5000, 5000), math.random(-1, 1)})
@@ -1742,6 +1765,9 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     end)
 
     menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player.", function ()
+=======
+    menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player, may not work on modders.", function ()
+>>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
         for i = -1, 1 do
             for n = -1, 1 do
                 util.trigger_script_event(1 << pid, {-65587051, 28, i, n})
@@ -1759,10 +1785,15 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
     end)
 
+<<<<<<< HEAD
     menuAction(ptoxic, "AIO kick.", {"aiok"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
         if SE_Notifications then
             util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
         end
+=======
+    menuAction(ptoxic, "AIO death.", {"aiok"}, "Uses every single goddamn known script event to kick a player. 'Slower, but better AIO' makes this slower, but it may work on more people. Tested for bugs, works.", function ()
+        util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
+>>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
         util.trigger_script_event(1 << pid, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
         wait(10) 
         util.trigger_script_event(1 << pid, {-1308840134, 1, 15, math.random(-2147483647, 2147483647)})
