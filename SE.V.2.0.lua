@@ -257,7 +257,6 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-
 --menu toggle for if the explosion is invisible or not, uses a GLOBAL 
 menuToggle(menuroot, "Invisible Explosion?", {"SE_invis", "seinvis"}, "Toggles whether the explosion will be invisible or not. On = Invisible. // BREAKS THE LONG-LASTING FIRE EFFECT OF THE MOLOTOV", function(on)
     if on then
@@ -288,7 +287,6 @@ menuToggle(menuroot, "Audible Explosion?", {"SE_audible", "seaudible"}, "Toggles
         end
     end
 end)
-
 -----------------------------------------------------------------------------------------------------------------------------------
 
 local lobbyFeats = menu.list(menuroot, "Lobby Features", {}, "")
@@ -727,69 +725,6 @@ end)
 
 local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
 
-menuAction(lobbyremove, "Remove all.", {}, "", function ()
-    for n = -100, 100 do
-        for i = -60, 60 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {0x39624029, n, 623656, i, 73473741, -7, 856844, -51251, 856844})
-        end
-    end
-    util.trigger_script_event(util.get_session_players_bitflag(), {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-    for i = -28, 28 do
-        for n = -1, 1 do
-            for a = -1, 1 do
-                util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, i, n, a})
-            end
-        end
-    end
-    for i = -28, 28 do
-        for n = -100, 100 do
-            for a = -100, 100 do
-                util.trigger_script_event(util.get_session_players_bitflag(), {-1782442696, i, n, a})
-            end
-        end
-    end
-    for i = -1100, -9988 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {2002459655, -1000000, i, -100000000})
-    end
-    for i = -100, 100 do
-        for n = 30, -30 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {911179316, i, n, -75, -59, 85, 82})
-        end
-    end
-    for i = -100, 100 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {-65587051, i, -1, -1})
-    end
-    util.trigger_script_event(util.get_session_players_bitflag(), {951147709, pid, 1000000, nil, nil}) 
-    for i = -100, 100 do
-        util.trigger_script_event(util.get_session_players_bitflag(), {-1949011582, i, 1518380048})
-    end
-    for i = -100, 100 do
-        for n = -100, 100 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, 28, i, n})
-        end
-    end
-end)
-
-menuAction(lobbyremove, "Freemode Death All.", {}, "", function ()
-    for i = -1, 1 do
-        for n = -1, 1 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {-65587051, 28, i, n})
-        end
-    end
-    for i = -1, 1 do
-        for n = -1, 1 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, 28, i, n})
-        end
-    end
-    wait(100)
-    util.trigger_script_event(util.get_session_players_bitflag(), {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-    util.trigger_script_event(util.get_session_players_bitflag(), {2002459655, -1000000, -10000, -100000000})
-    util.trigger_script_event(util.get_session_players_bitflag(), {911179316, -38, -30, -75, -59, 85, 82})
-end)
-
 TXC_SLOW = false
 
 menuAction(lobbyremove, "AIO Kick All.", {}, "", function ()
@@ -1188,7 +1123,7 @@ menuToggleLoop(killAuraSettings, "Draw peds in radius", {"kadrawpeds"}, "If togg
         end
     end
     local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
-    directx.draw_text(0.0, 0.11, "Peds in radius of >> " .. KA_Radius .. " << " .. #dtable, ALIGN_TOP_LEFT, 0.6, cc, false)
+    directx.draw_text(0.0, 0.11, "Peds in radius of >> " .. KA_Radius .. " << " .. #dtable, ALIGN_TOP_LEFT, 0.5, cc, false)
 end)
 
 menuAction(killAuraSettings, "Spawn test peds", {}, "", function ()
@@ -1806,52 +1741,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-    menuAction(ptoxic, "Bro Hug Leave", {}, "Uses every possible known script event to forcibly remove the player. This may not work on modders with good menus.", function ()
-        for n = -100, 100 do
-            for i = -60, 60 do
-                util.trigger_script_event(1 << pid, {0x39624029, n, 623656, i, 73473741, -7, 856844, -51251, 856844})
-            end
-        end
-        util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-        util.trigger_script_event(1 << pid, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
-        util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-        for i = -28, 28 do
-            for n = -1, 1 do
-                for a = -1, 1 do
-                    util.trigger_script_event(1 << pid, {1445703181, i, n, a})
-                end
-            end
-        end
-        for i = -28, 28 do
-            for n = -100, 100 do
-                for a = -100, 100 do
-                    util.trigger_script_event(1 << pid, {-1782442696, i, n, a})
-                end
-            end
-        end
-        for i = -1100, -9988 do
-            util.trigger_script_event(1 << pid, {2002459655, -1000000, i, -100000000})
-        end
-        for i = -100, 100 do
-            for n = 30, -30 do
-                util.trigger_script_event(1 << pid, {911179316, i, n, -75, -59, 85, 82})
-            end
-        end
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {-65587051, i, -1, -1})
-        end
-        util.trigger_script_event(1 << pid, {951147709, pid, 1000000, nil, nil}) 
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {-1949011582, i, 1518380048})
-        end
-        for i = -100, 100 do
-            for n = -100, 100 do
-                util.trigger_script_event(1 << pid, {1445703181, 28, i, n})
-            end
-        end
-    end)
-
-
     menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player.", function ()
         for i = -1, 1 do
             for n = -1, 1 do
@@ -1870,8 +1759,10 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
     end)
 
-    menuAction(ptoxic, "AIO death.", {"aiok"}, "", function ()
-        util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
+    menuAction(ptoxic, "AIO kick.", {"aiok"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
+        if SE_Notifications then
+            util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
+        end
         util.trigger_script_event(1 << pid, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
         wait(10) 
         util.trigger_script_event(1 << pid, {-1308840134, 1, 15, math.random(-2147483647, 2147483647)})
@@ -1988,9 +1879,11 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
                 end
             end
         end
-        util.toast("Fourth block done. // AIO")
-        util.toast("Iteration " .. pid .. " complete of AIO kick.")
-        util.toast("Player " .. PLAYER.GET_PLAYER_NAME(pid) .. " done.")
+        if SE_Notifications then
+            util.toast("Fourth block done. // AIO")
+            util.toast("Iteration " .. pid .. " complete of AIO kick.")
+            util.toast("Player " .. PLAYER.GET_PLAYER_NAME(pid) .. " done.")
+        end
     end)
 
 
