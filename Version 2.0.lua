@@ -1015,6 +1015,9 @@ menuAction(mFunFeats, "Clear Extinct List", {}, "", function ()
     MarkedForExtCount = 1
 end)
 
+
+----------------------------------------------------------------------------------------------------
+
 menu.divider(mFunFeats, "Kill Aura")
 
 --preload
@@ -1032,7 +1035,6 @@ menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally play
     local weaponhash = 177293209 -- heavy sniper mk2 hash
     --
     local pedPointers = entities.get_all_peds_as_pointers()
-    local pedLocations = {}
     for i = 1, #pedPointers do
         local v3 = entities.get_position(pedPointers[i])
         local vdist = MISC.GET_DISTANCE_BETWEEN_COORDS(ourcoords.x, ourcoords.y, ourcoords.z, v3.x, v3.y, v3.z, true)
@@ -1045,9 +1047,6 @@ menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally play
         if (not KA_Players and not PED.IS_PED_A_PLAYER(toKill[i])) or (KA_Players and PED.IS_PED_A_PLAYER(toKill[i])) then
             if not PED.IS_PED_DEAD_OR_DYING(toKill[i]) then
                 if PED.IS_PED_IN_ANY_VEHICLE(toKill[i]) then
-                    if SE_Notifications then
-                        util.toast("Ped with index " .. i .. " is in a vehicle.")
-                    end
                     local veh = PED.GET_VEHICLE_PED_IS_IN(toKill[i], false)
                     local pedcoords = getEntityCoords(toKill[i])
                     if not PED.IS_PED_A_PLAYER(toKill[i]) and KA_Delvehs then
@@ -1073,9 +1072,6 @@ menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally play
                         entities.delete_by_handle(toKill[i])
                     end
                 else
-                    if SE_Notifications then
-                        util.toast("Ped with index " .. i .. " is in range.")
-                    end
                     local pedcoords = getEntityCoords(toKill[i])
                     if KA_Blame then
                         MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, false, -1)
@@ -1161,6 +1157,110 @@ end)
 
 menuAction(killAuraSettings, "Populate the map.", {}, "After killing a bit too many peds, you can re-populate the map with this neat button. How cool!", function ()
     MISC.POPULATE_NOW()
+end)
+
+----------------------------------------------------------------------------------------------------
+
+menu.divider(mFunFeats, "Crystal Aura")
+
+CA_Radius = 20
+CA_Players = false
+CA_Blame = true
+CA_audible = false
+CA_invis = true
+CA_delpeds = false
+CA_delvehs = false
+
+menuAction(mFunFeats, "CrystalAura", {"crystalaura"}, "Explodes peds, optionally players, optionally friends, in a radius. Optional invisibility and inaudibility is in settings.", function ()
+    local tKCount = 1 -- count
+    local toKill = {} -- table
+    local ourcoords = getEntityCoords(getLocalPed()) -- our coords
+    local ourped = getLocalPed() -- our ped (for blame)
+    --
+    local pedPointers = entities.get_all_peds_as_pointers()
+    for i = 1, #pedPointers do
+        local v3 = entities.get_position(pedPointers[i])
+        local vdist = MISC.GET_DISTANCE_BETWEEN_COORDS(ourcoords.x, ourcoords.y, ourcoords.z, v3.x, v3.y, v3.z, true)
+        if vdist <= CA_Radius then
+            toKill[tKCount] = entities.pointer_to_handle(pedPointers[i])
+            tKCount = tKCount + 1
+        end
+    end
+    for i = 1, #toKill do
+        if (not CA_Players and not PED.IS_PED_A_PLAYER(toKill[i])) or (CA_Players and PED.IS_PED_A_PLAYER(toKill[i])) then
+            if not PED.IS_PED_DEAD_OR_DYING(toKill[i]) then
+                local veh = PED.GET_VEHICLE_PED_IS_IN(toKill[i], false)
+                if CA_delvehs and not PED.IS_PED_A_PLAYER(toKill[i]) then
+                    entities.delete_by_handle(veh)
+                end
+                local entcoords = getEntityCoords(toKill[i])
+                if CA_Blame then
+                    SE_add_owned_explosion(ourped, entcoords.x, entcoords.y, entcoords.z, 2, 1, CA_audible, CA_invis, 0)
+                else
+                    SE_add_explosion(entcoords.x, entcoords.y, entcoords.z, 2, 1, CA_audible, CA_invis, 0, false)
+                end
+            end
+            wait(50)
+            if PED.IS_PED_DEAD_OR_DYING(toKill[i] and CA_delpeds) then
+                entities.delete_by_handle(toKill[i])
+            end
+        end
+    end
+end)
+
+local CA_settings = menu.list(mFunFeats, "Crystal Aura Settings", {}, "")
+
+menu.slider(CA_settings, "Crystal Aura Radius", {"caradius"}, "Radius for Crystal Aura.", 1, 100, 20, 1, function (value)
+    CA_Radius = value
+end)
+
+menuToggle(CA_settings, "Crystal Aura blames me?", {}, "Have the crystal aura blame you for explosions.", function (toggle)
+    if toggle then
+        CA_Blame = true
+    else
+        CA_Blame = false
+    end
+end, true)
+
+--COMMENTED OUT UNTIL I CAN FIND A METHOD TO NOT TARGET MYSELF!
+--[[menuToggle(CA_settings, "Crystal Aura targets players?", {}, "Enabling targetting players.", function (toggle)
+    if toggle then
+        CA_Players = true
+    else
+        CA_Players = false
+    end
+end)]]
+
+menuToggle(CA_settings, "Crystal Aura heard?", {}, "Makes the explosions heard/audible.", function (toggle)
+    if toggle then
+        CA_audible = true
+    else
+        CA_audible = false
+    end
+end)
+
+menuToggle(CA_settings, "Crystal Aura invisible?", {}, "Makes the explosions invisible.", function (toggle)
+    if toggle then
+        CA_invis = true
+    else
+        CA_invis = false
+    end
+end, true)
+
+menuToggle(CA_settings, "Delete peds after killing?", {}, "Makes the peds get deleted after they die.", function (toggle)
+    if toggle then
+        CA_delpeds = true
+    else
+        CA_delpeds = false
+    end
+end)
+
+menuToggle(CA_settings, "Delete cars of peds?", {}, "Makes the peds' cars get delted.", function (toggle)
+    if toggle then
+        CA_delvehs = true
+    else
+        CA_delvehs = false
+    end
 end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
