@@ -725,31 +725,33 @@ end)
 
 local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
 
-<<<<<<< HEAD
-=======
-
-menuAction(lobbyremove, "Freemode Death All.", {}, "", function ()
-    for i = -1, 1 do
-        for n = -1, 1 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {-65587051, 28, i, n})
+menuAction(lobbyremove, "Freemdoe death all.", {}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
+    for p = 0, 31 do
+        if p ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(p) then
+            for i = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << p, {-65587051, 28, i, n})
+                end
+            end
+            for i = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << p, {1445703181, 28, i, n})
+                end
+            end
+            wait(100)
+            util.trigger_script_event(1 << p, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+            util.trigger_script_event(1 << p, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+            util.trigger_script_event(1 << p, {2002459655, -1000000, -10000, -100000000})
+            util.trigger_script_event(1 << p, {911179316, -38, -30, -75, -59, 85, 82})
         end
     end
-    for i = -1, 1 do
-        for n = -1, 1 do
-            util.trigger_script_event(util.get_session_players_bitflag(), {1445703181, 28, i, n})
-        end
-    end
-    wait(100)
-    util.trigger_script_event(util.get_session_players_bitflag(), {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
-    util.trigger_script_event(util.get_session_players_bitflag(), {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
-    util.trigger_script_event(util.get_session_players_bitflag(), {2002459655, -1000000, -10000, -100000000})
-    util.trigger_script_event(util.get_session_players_bitflag(), {911179316, -38, -30, -75, -59, 85, 82})
 end)
 
->>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
+
+
 TXC_SLOW = false
 
-menuAction(lobbyremove, "AIO Kick All.", {}, "", function ()
+menuAction(lobbyremove, "AIO Kick All.", {}, "Will probably not work on some menus.", function ()
     menu.trigger_commands("scripthost")
     for i = 0, 31 do
         if i ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
@@ -1198,54 +1200,6 @@ menuToggleLoop(debugFeats, "Request Control?", {}, "", function ()
     end
 end)
 
-menuToggleLoop(debugFeats, "Unlock Vehicle?", {}, "", function ()
-    ::start::
-    local localPed = getLocalPed()
-    if PED.IS_PED_SHOOTING(localPed) then
-        local pointer = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
-        if isEntFound then
-            local entity = memory.read_int(pointer)
-            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
-                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
-                ---------------------------------------------
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    for i = 1, 20 do
-                        NETWORK.REQUEST_CONTROL_OF_ENTITY(vehicle)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    util.toast("Has control.")
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
-            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    for i = 1, 20 do
-                        NETWORK.REQUEST_CONTROL_OF_ENTITY(entity)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    util.toast("Has control.")
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entitity, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
-            end
-        end
-    end
-end)
 
 menuToggleLoop(debugFeats, "Get V3 Of Entity", {"entcoords"}, "Toasts the coodinates of the entity you shoot.", function ()
     local pp = getLocalPed()
@@ -1349,6 +1303,55 @@ menuToggleLoop(toolFeats, "Draw Entity Pool", {"drawentpool"}, "", function ()
     directx.draw_text(0.0, 0.07, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     local pickpool = entities.get_all_pickups_as_pointers()
     directx.draw_text(0.0, 0.09, "pickups: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+end)
+
+menuToggleLoop(toolFeats, "Unlock Vehicle", {"unlockveh"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
+    ::start::
+    local localPed = getLocalPed()
+    if PED.IS_PED_SHOOTING(localPed) then
+        local pointer = memory.alloc(4)
+        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
+        if isEntFound then
+            local entity = memory.read_int(pointer)
+            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
+                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
+                ---------------------------------------------
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    for i = 1, 20 do
+                        NETWORK.REQUEST_CONTROL_OF_ENTITY(vehicle)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    util.toast("Has control.")
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
+            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    for i = 1, 20 do
+                        NETWORK.REQUEST_CONTROL_OF_ENTITY(entity)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    util.toast("Has control.")
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entitity, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
+            end
+        end
+    end
 end)
 
 menu.divider(toolFeats, "Settings")
@@ -1756,18 +1759,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menu.divider(ptoxic, "Bro Hug")
 
-<<<<<<< HEAD
-    menuAction(ptoxic, "Bro hug lag", {}, "", function ()
-        for i = -100, 100 do
-            util.trigger_script_event(1 << pid, {27382701, i, math.random(-5000, 5000), math.random(-5000, 5000), math.random(-1, 1)})
-            util.toast("triggered Bro hug lag on " .. NETWORK.NETWORK_PLAYER_GET_NAME(pid))
-        end
-    end)
-
     menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player.", function ()
-=======
-    menuAction(ptoxic, "Freemode Death", {"fdeath"}, "Freemode death on player, may not work on modders.", function ()
->>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
         for i = -1, 1 do
             for n = -1, 1 do
                 util.trigger_script_event(1 << pid, {-65587051, 28, i, n})
@@ -1785,15 +1777,10 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
     end)
 
-<<<<<<< HEAD
     menuAction(ptoxic, "AIO kick.", {"aiok"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
         if SE_Notifications then
             util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
         end
-=======
-    menuAction(ptoxic, "AIO death.", {"aiok"}, "Uses every single goddamn known script event to kick a player. 'Slower, but better AIO' makes this slower, but it may work on more people. Tested for bugs, works.", function ()
-        util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
->>>>>>> ba40630e1aae9df8d2683fe6af9f0cae6a76f2ad
         util.trigger_script_event(1 << pid, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
         wait(10) 
         util.trigger_script_event(1 << pid, {-1308840134, 1, 15, math.random(-2147483647, 2147483647)})
