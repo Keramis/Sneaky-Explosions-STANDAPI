@@ -90,7 +90,7 @@ require("natives-1640181023")
 
 util.keep_running()
 
-local scriptName = "SneakyE V.1.5"
+local scriptName = "KeramisScript V.2.1"
 
 local menuroot = menu.my_root()
 local menuAction = menu.action
@@ -142,7 +142,7 @@ local function fastNet(entity, playerID)
     NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
     if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
         for i = 1, 30 do
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY then
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
                 NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
                 wait(10)
             else
@@ -1024,6 +1024,7 @@ menu.divider(mFunFeats, "Kill Aura")
 KA_Radius = 20
 KA_Blame = true
 KA_Players = false
+KA_Onlyplayers = false
 KA_Delvehs = false
 KA_Delpeds = false
 
@@ -1044,43 +1045,45 @@ menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally play
         end
     end
     for i = 1, #toKill do
-        if (not KA_Players and not PED.IS_PED_A_PLAYER(toKill[i])) or (KA_Players and PED.IS_PED_A_PLAYER(toKill[i])) then
-            if not PED.IS_PED_DEAD_OR_DYING(toKill[i]) then
-                if PED.IS_PED_IN_ANY_VEHICLE(toKill[i]) then
-                    local veh = PED.GET_VEHICLE_PED_IS_IN(toKill[i], false)
-                    local pedcoords = getEntityCoords(toKill[i])
-                    if not PED.IS_PED_A_PLAYER(toKill[i]) and KA_Delvehs then
-                        entities.delete_by_handle(veh)
-                    end
-                    if KA_Blame then
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+        if (not KA_Onlyplayers and not PED.IS_PED_A_PLAYER(toKill[i])) or (KA_Players) or (KA_Onlyplayers and PED.IS_PED_A_PLAYER(toKill[i])) then
+            if toKill[i] ~= getLocalPed() then
+                if not PED.IS_PED_DEAD_OR_DYING(toKill[i]) then
+                    if PED.IS_PED_IN_ANY_VEHICLE(toKill[i]) then
+                        local veh = PED.GET_VEHICLE_PED_IS_IN(toKill[i], false)
+                        local pedcoords = getEntityCoords(toKill[i])
+                        if not PED.IS_PED_A_PLAYER(toKill[i]) and KA_Delvehs then
+                            entities.delete_by_handle(veh)
+                        end
+                        if KA_Blame then
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, fastNet, -1, veh, true)
+                        else
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
+                        end
+                        wait(50)
+                        if not PED.IS_PED_A_PLAYER(toKill[i]) and PED.IS_PED_DEAD_OR_DYING(toKill[i]) and KA_Delpeds then
+                            entities.delete_by_handle(toKill[i])
+                        end
                     else
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y, pedcoords.z - 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x + 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x - 1, pedcoords.y, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y + 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(pedcoords.x, pedcoords.y - 1, pedcoords.z + 0.5, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1, veh, true)
-                    end
-                    wait(50)
-                    if not PED.IS_PED_A_PLAYER(toKill[i]) and PED.IS_PED_DEAD_OR_DYING(toKill[i]) and KA_Delpeds then
-                        entities.delete_by_handle(toKill[i])
-                    end
-                else
-                    local pedcoords = getEntityCoords(toKill[i])
-                    if KA_Blame then
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, false, -1)
-                    else
-                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1)
-                    end
-                    wait(50)
-                    if not PED.IS_PED_A_PLAYER(toKill[i]) and PED.IS_PED_DEAD_OR_DYING(toKill[i]) and KA_Delpeds then
-                        entities.delete_by_handle(toKill[i])
+                        local pedcoords = getEntityCoords(toKill[i])
+                        if KA_Blame then
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, ourped, false, false, -1)
+                        else
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(pedcoords.x, pedcoords.y, pedcoords.z + 2, pedcoords.x, pedcoords.y, pedcoords.z, 1000, true, weaponhash, 0, false, false, -1)
+                        end
+                        wait(50)
+                        if not PED.IS_PED_A_PLAYER(toKill[i]) and PED.IS_PED_DEAD_OR_DYING(toKill[i]) and KA_Delpeds then
+                            entities.delete_by_handle(toKill[i])
+                        end
                     end
                 end
             end
@@ -1107,8 +1110,22 @@ end, true)
 menuToggle(killAuraSettings, "Target Players?", {"kaplayers"}, "If toggled off, will only target peds.", function (toggle)
     if toggle then
         KA_Players = true
+        if KA_Onlyplayers then
+            menu.trigger_commands("kaonlyplayers")
+        end
     else
         KA_Players = false
+    end
+end)
+
+menuToggle(killAuraSettings, "Target ONLY Players?", {"kaonlyplayers"}, "If toggled on, will target ONLY players.", function (toggle)
+    if toggle then
+        KA_Onlyplayers = true
+        if KA_Players then
+            menu.trigger_commands("kaplayers")
+        end
+    else
+        KA_Onlyplayers = false
     end
 end)
 
@@ -1147,7 +1164,7 @@ menuToggleLoop(killAuraSettings, "Draw peds in radius", {"kadrawpeds"}, "If togg
 end)
 
 menuAction(killAuraSettings, "Spawn test peds", {}, "", function ()
-    local hash = joaat("S_M_Y_Swat_01")
+    local hash = joaat("G_M_M_ChiGoon_02")
     local coords = getEntityCoords(getLocalPed())
     requestModel(hash)
     while not hasModelLoaded(hash) do wait() end
@@ -1402,18 +1419,101 @@ menuToggleLoop(toolFeats, "Draw position", {"drawpos"},  "", function ()
     directx.draw_text(0.0, 0.0, "x: " .. pos.x .. " // y: " .. pos.y .. " // z: " .. pos.z, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
 end)
 
+--preload
+EP_drawveh = true
+EP_drawped = true
+EP_drawobj = true
+EP_drawpick = true
+----
+EPS_vehx = 0.0
+EPS_vehy = 0.03
+--
+EPS_pedx = 0.0
+EPS_pedy = 0.05
+--
+EPS_objx = 0.0
+EPS_objy = 0.07
+--
+EPS_pickx = 0.0
+EPS_picky = 0.09
+--
+
 menuToggleLoop(toolFeats, "Draw Entity Pool", {"drawentpool"}, "", function ()
-    local vehpool = entities.get_all_vehicles_as_pointers()
     local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
-    directx.draw_text(0.0, 0.03, "vehicles: " .. #vehpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
-    local pedpool = entities.get_all_peds_as_pointers()
-    directx.draw_text(0.0, 0.05, "peds: " .. #pedpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
-    local objpool = entities.get_all_objects_as_pointers()
-    directx.draw_text(0.0, 0.07, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
-    local pickpool = entities.get_all_pickups_as_pointers()
-    directx.draw_text(0.0, 0.09, "pickups: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    if EP_drawveh then
+        local vehpool = entities.get_all_vehicles_as_pointers()
+        directx.draw_text(EPS_vehx, EPS_vehy, "vehicles: " .. #vehpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    end
+    if EP_drawped then
+        local pedpool = entities.get_all_peds_as_pointers()
+        directx.draw_text(EPS_pedx, EPS_pedy, "peds: " .. #pedpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    end
+    if EP_drawobj then
+        local objpool = entities.get_all_objects_as_pointers()
+        directx.draw_text(EPS_objx, EPS_objy, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    end
+    if EP_drawpick then
+        local pickpool = entities.get_all_pickups_as_pointers()
+        directx.draw_text(EPS_pickx, EPS_picky, "pickups: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+    end
 end)
 
+local ePS = menu.list(toolFeats, "Entity Pool Settings", {}, "")
+menuToggle(ePS, "Draw Vehicles?", {}, "", function (toggle)
+    if toggle then
+        EP_drawveh = true
+    else
+        EP_drawveh = false
+    end
+end, true)
+menu.slider(ePS, "Vehicle Text Placement X", {"epvehposx"}, "/100", 0, 100, 0, 1, function (value)
+    EPS_vehx = value / 100
+end) 
+menu.slider(ePS, "Vehicle Text Placement Y", {"epvehposy"}, "/100", 0, 100, 3, 1, function (value)
+    EPS_vehy = value / 100
+end)
+menuToggle(ePS, "Draw Peds?", {}, "", function (toggle)
+    if toggle then 
+        EP_drawped = true
+    else
+        EP_drawped = false
+    end
+end, true)
+menu.slider(ePS, "Ped Text Placement X", {"eppedposx"}, "/100", 0, 100, 0, 1, function (value)
+    EPS_pedx = value / 100
+end)
+menu.slider(ePS, "Ped Text Placement Y", {"eppedposy"}, "/100", 0, 100, 5, 1, function (value)
+    EPS_pedy = value / 100
+end)
+menuToggle(ePS, "Draw Objects?", {}, "", function (toggle)
+    if toggle then
+        EP_drawobj = true
+    else
+        EP_drawobj = false
+    end
+end, true)
+menu.slider(ePS, "Object Text Placement X", {"epobjposx"}, "/100", 0, 100, 0, 1, function (value)
+    EPS_objx = value / 100
+end)
+menu.slider(ePS, "Object Text Placement Y", {"epobjposy"}, "/100", 0, 100, 7, 1, function (value)
+    EPS_objy = value / 100
+end)
+menuToggle(ePS, "Draw Pickups?", {}, "", function (toggle)
+    if toggle then
+        EP_drawpick = true
+    else
+        EP_drawpick = false
+    end
+end, true)
+menu.slider(ePS, "Pickups Text Placement X", {"epickjposx"}, "/100", 0, 100, 0, 1, function (value)
+    EPS_pickx = value / 100
+end)
+menu.slider(ePS, "Pickups Text Placement Y", {"epickjposy"}, "/100", 0, 100, 9, 1, function (value)
+    EPS_picky = value / 100
+end)
+
+
+----
 menuToggleLoop(toolFeats, "Unlock Vehicle that you shoot", {"unlockvehshot"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
     ::start::
     local localPed = getLocalPed()
@@ -1469,28 +1569,36 @@ menuToggleLoop(toolFeats, "Unlock vehicle that you try to get into", {"unlockveh
     ::start::
     local localPed = getLocalPed()
     local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localPed)
-    if SE_Notifications then
-        util.toast(tostring(veh))
-    end
-        if veh ~= 0 then
-        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-            for i = 1, 20 do
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-                wait(100)
-            end
+    if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
+        local v = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED(v, 1)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(v, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(v, players.user(), false)
+        wait()
+    else
+        if SE_Notifications then
+            util.toast(tostring(veh))
         end
-        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-            util.toast("Waited 2 secs, couldn't get control!")
-            goto start
-        else
-            if SE_Notifications then
-                util.toast("Has control.")
+            if veh ~= 0 then
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                for i = 1, 20 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    wait(100)
+                end
             end
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                util.toast("Waited 2 secs, couldn't get control!")
+                goto start
+            else
+                if SE_Notifications then
+                    util.toast("Has control.")
+                end
+            end
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
         end
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
     end
 end)
 
@@ -2044,9 +2152,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-
-
-
     menu.divider(ptoxic, "Casino Blocks")
 
     menuAction(ptoxic, "Block Casino, Semi-Permanently.", {}, "Blocks the casino for them, so they have to restart their game in order to access it. Joining a new session will not work for them. This sometimes doesn't work, but most of the time, it does.", function ()
@@ -2433,6 +2538,32 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
+    -----------------------------------------------------------------------------------------------------------------------------------
+
+    --[[
+    menu.divider(playerOtherTrolling, "Less Toxic")
+    menuAction(playerOtherTrolling, "Give them a wanted star!", {"gwant"}, "Kills some peds to give the player 1 (sometimes 2) wanted star(s).", function ()
+        local hash = joaat("G_M_M_ChiGoon_02")
+        local ped = getPlayerPed(pid)
+        local c = getEntityCoords(ped)
+        local myped = getLocalPed()
+        requestModel(hash)
+        while not hasModelLoaded(hash) do wait() end
+        local peds = {}
+        for i = 1, 5 do
+            peds[i] = PED.CREATE_PED(24, hash, c.x, c.y, c.z + 10, 0, true, false)
+            wait(10)
+        end
+        SE_add_owned_explosion(ped, c.x, c.y, c.z + 10, 2, 20, false, true, 0)
+        SE_add_owned_explosion(ped, c.x, c.y, c.z + 9, 2, 20, false, true, 0)
+        SE_add_owned_explosion(ped, c.x, c.y, c.z + 8, 2, 20, false, true, 0)
+        wait(3000)
+        for i = 1, #peds do
+            entities.delete_by_handle(peds[i])
+        end
+        noNeedModel(hash)
+    end)
+    ]]
 
     -----------------------------------------------------------------------------------------------------------------------------------
 
