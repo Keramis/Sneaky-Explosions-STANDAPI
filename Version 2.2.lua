@@ -123,6 +123,18 @@ local function getLocalPed()
     return PLAYER.PLAYER_PED_ID()
 end
 
+local function distanceBetweenTwoEntities(entity1, entity2)
+    local v3_1 = ENTITY.GET_ENTITY_COORDS(entity1, false)
+    local v3_2 = ENTITY.GET_ENTITY_COORDS(entity2, false)
+
+    local distance = math.sqrt(((v3_2.x - v3_1.x)^2) + ((v3_2.y - v3_1.y)^2) + ((v3_2.z - v3_1.z)^2))
+    return distance
+end
+
+local function distanceBetweenTwoCoords(v3_1, v3_2)
+    local distance = math.sqrt(((v3_2.x - v3_1.x)^2) + ((v3_2.y - v3_1.y)^2) + ((v3_2.z - v3_1.z)^2))
+    return distance
+end
 
 local function onStartup()
     SE_impactCoord = memory.alloc()
@@ -733,7 +745,7 @@ end)
 
 local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
 
-menuAction(lobbyremove, "Freemdoe death all.", {}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
+menuAction(lobbyremove, "Freemode death all.", {"allfdeath"}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
     for p = 0, 31 do
         if p ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(p) then
             for i = -1, 1 do
@@ -752,6 +764,11 @@ menuAction(lobbyremove, "Freemdoe death all.", {}, "Will probably not work on so
             util.trigger_script_event(1 << p, {2002459655, -1000000, -10000, -100000000})
             util.trigger_script_event(1 << p, {911179316, -38, -30, -75, -59, 85, 82})
         end
+        for i = -1, 1 do
+            for a = -1, 1 do
+                util.trigger_script_event(1 << pid, {916721383, i, a, 0, 26})
+            end
+        end
     end
 end)
 
@@ -759,7 +776,7 @@ end)
 
 TXC_SLOW = false
 
-menuAction(lobbyremove, "AIO Kick All.", {}, "Will probably not work on some menus.", function ()
+menuAction(lobbyremove, "AIO Kick All.", {"allaiokick", "allaiok"}, "Will probably not work on some menus.", function ()
     menu.trigger_commands("scripthost")
     for i = 0, 31 do
         if i ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
@@ -1294,7 +1311,81 @@ end)
 menu.divider(mFunFeats, "PvP / PvE Helper")
 local pvphelp = menu.list(mFunFeats, "PvP / PvE Helper", {}, "")
 
+--preload
+AIM_Spine2 = false
+AIM_Toe0 = false
+AIM_Pelvis = false
+AIM_Head = false
+AIM_RHand = false
+----
+AIM_FOV = 1
+AIM_Dist = 300
 
+menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
+    local ourped = getLocalPed()
+    if PED.IS_PED_SHOOTING(ourped) then
+        local pTable = {}
+        local pCount = 1
+        local ourc = getEntityCoords(ourped)
+        local entTable = entities.get_all_peds_as_pointers()
+        local inRange = {}
+        local inCount = 1
+        for i = 1, #entTable do
+            local ed = entities.get_position(entTable[i])
+            local entdist = distanceBetweenTwoCoords(ourc, ed)
+            if entdist < AIM_Dist + 1 then
+                local handle = entities.pointer_to_handle(entTable[i])
+                if handle ~= getLocalPed() then
+                    inRange[inCount] = handle
+                    inCount = inCount + 1
+                end
+            end
+        end
+        --util.toast("Entities in range of // " .. AIM_Dist .. " // :" .. #inRange)
+        for i = 1, #inRange do
+            local coord = getEntityCoords(inRange[i])
+            if PED.IS_PED_A_PLAYER(inRange[i]) then --check if player
+                if ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) then --check if we have line of sight
+                    if PED.IS_PED_FACING_PED(ourped, inRange[i], AIM_FOV) then --check for FOV
+                        --shooting done here, we have all preloads
+                        local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
+                        local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
+                        util.toast("PlayerName Targeted: " .. tostring(playerName))
+                        if AIM_Spine2 then
+                            --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
+                            local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
+                            util.toast(bonec.x .. " " .. bonec.y .. " " .. bonec.z)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+menu.slider(pvphelp, "Silent Aimbot Range", {"silentaimrange", "silentrange", "saimrange"}, "Silent Aimbot Range", 1, 10000, 300, 1, function (value)
+    AIM_Dist = value
+end)
+
+menu.slider(pvphelp, "Silent Aimbot FOV", {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
+    AIM_FOV = value / 10
+end)
+
+menuToggle(pvphelp, "Silent Aimbot Spine2", {}, "", function(on)
+    if on then
+        AIM_Spine2 = true
+    else
+        AIM_Spine2 = false
+    end
+end)
+
+--GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS --for shooting the kneecaps
+--https://wiki.gtanet.work/index.php?title=Bones
+--SKEL_Spine2 	24817
+--SKEL_R_Toe0 	20781
+--SKEL_Pelvis 	11816
+--IK_Head 	12844
+--IK_R_Hand 	6286
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
@@ -2058,9 +2149,14 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
         util.trigger_script_event(1 << pid, {2002459655, -1000000, -10000, -100000000})
         util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
+        for i = -1, 1 do
+            for a = -1, 1 do
+                util.trigger_script_event(1 << pid, {916721383, i, a, 0, 26})
+            end
+        end
     end)
 
-    menuAction(ptoxic, "AIO kick.", {"aiok"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
+    menuAction(ptoxic, "AIO kick.", {"aiok", "aiokick"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
         if SE_Notifications then
             util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
         end
