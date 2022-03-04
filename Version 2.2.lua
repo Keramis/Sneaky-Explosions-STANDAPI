@@ -1320,6 +1320,7 @@ AIM_RHand = false
 ----
 AIM_FOV = 1
 AIM_Dist = 300
+AIM_DMG = 30
 
 menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
     local ourped = getLocalPed()
@@ -1350,11 +1351,30 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
                         --shooting done here, we have all preloads
                         local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
                         local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
-                        util.toast("PlayerName Targeted: " .. tostring(playerName))
+                        if SE_Notifications then
+                            util.toast("Targeted: " .. tostring(playerName))
+                        end
+                        local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(inRange[i], 0, 1, 0)
+                        if AIM_Head then
+                            local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                        end
                         if AIM_Spine2 then
                             --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
-                            util.toast(bonec.x .. " " .. bonec.y .. " " .. bonec.z)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                        end
+                        if AIM_Pelvis then
+                            local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                        end
+                        if AIM_Toe0 then
+                            local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                        end
+                        if AIM_RHand then
+                            local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
                         end
                     end
                 end
@@ -1363,15 +1383,30 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
     end
 end)
 
-menu.slider(pvphelp, "Silent Aimbot Range", {"silentaimrange", "silentrange", "saimrange"}, "Silent Aimbot Range", 1, 10000, 300, 1, function (value)
+menu.divider(pvphelp, "Silent Aimbot Settings")
+local silentAimSettings = menu.list(pvphelp, "Silent Aim Settings", {}, "")
+
+menu.slider(silentAimSettings, "Silent Aimbot Damage", {"silentaimdamage", "silentdamage", "saimdamage"}, "The amount of damage Silent Aimbot does. Not accurate, sadly...", 1, 10000, 30, 10, function(value)
+    AIM_DMG = value
+end)
+
+menu.slider(silentAimSettings, "Silent Aimbot Range", {"silentaimrange", "silentrange", "saimrange"}, "Silent Aimbot Range", 1, 10000, 300, 1, function (value)
     AIM_Dist = value
 end)
 
-menu.slider(pvphelp, "Silent Aimbot FOV", {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
+menu.slider(silentAimSettings, "Silent Aimbot FOV", {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
     AIM_FOV = value / 10
 end)
 
-menuToggle(pvphelp, "Silent Aimbot Spine2", {}, "", function(on)
+menuToggle(silentAimSettings, "Silent Aimbot Head", {"silentaimhead", "silenthead", "saimhead"}, "Makes the aimbot target the head. Probably doesn't look legitimate, but ok.", function(on)
+    if on then
+        AIM_Head = true
+    else
+        AIM_Head = false
+    end
+end)
+
+menuToggle(silentAimSettings, "Silent Aimbot Body (Spine2)", {"silentaimspine2", "silentspine2", "saimspine2"}, "Makes the aimbot target the body, also known as spine2.", function(on)
     if on then
         AIM_Spine2 = true
     else
@@ -1379,12 +1414,36 @@ menuToggle(pvphelp, "Silent Aimbot Spine2", {}, "", function(on)
     end
 end)
 
+menuToggle(silentAimSettings, "Silent Aimbot Pelvis", {"silentaimpelvis", "silentpelvis", "saimpelvis"}, "Makes the aimbot target the pelvis.", function (on)
+    if on then
+        AIM_Pelvis = true
+    else
+        AIM_Pelvis = false
+    end
+end)
+
+menuToggle(silentAimSettings, "Silent Aimbot Toe (Toe0)", {"silentaimtoe", "silenttoe", "saimtoe"}, "Makes the aimbot target the toe, otherwise known as toe0", function (on)
+    if on then
+        AIM_Toe0 = true
+    else
+        AIM_Toe0 = false
+    end
+end)
+
+menuToggle(silentAimSettings, "Silent Aimbot Hand (R_HAND)", {"silentaimhand", "silenthand", "saimhand"}, "Makes the aimbot target the hand, otherwise known as R_Hand", function (on)
+    if on then
+        AIM_RHand = true
+    else
+        AIM_RHand = false
+    end
+end)
+
 --GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS --for shooting the kneecaps
 --https://wiki.gtanet.work/index.php?title=Bones
---SKEL_Spine2 	24817
---SKEL_R_Toe0 	20781
---SKEL_Pelvis 	11816
 --IK_Head 	12844
+--SKEL_Spine2 	24817
+--SKEL_Pelvis 	11816
+--SKEL_R_Toe0 	20781
 --IK_R_Hand 	6286
 
 
