@@ -266,7 +266,7 @@ local function netItAll(entity)
     end
 end
 
-function get_waypoint_pos(callback)
+local function get_waypoint_pos(callback)
     if HUD.IS_WAYPOINT_ACTIVE() then
         local blip = HUD.GET_FIRST_BLIP_INFO_ID(8)
         local waypoint_pos = HUD.GET_BLIP_COORDS(blip)
