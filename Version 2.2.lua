@@ -1322,6 +1322,9 @@ AIM_RHand = false
 AIM_FOV = 1
 AIM_Dist = 300
 AIM_DMG = 30
+----
+LOS_CHECK = true
+FOV_CHECK = true
 
 menu.divider(pvphelp, "Silent Aimbot")
 
@@ -1349,8 +1352,8 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
         for i = 1, #inRange do
             local coord = getEntityCoords(inRange[i])
             if PED.IS_PED_A_PLAYER(inRange[i]) then --check if player
-                if ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) then --check if we have line of sight
-                    if PED.IS_PED_FACING_PED(ourped, inRange[i], AIM_FOV) then --check for FOV
+                if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) and LOS_CHECK == true) or (LOS_CHECK == false) then --check if we have line of sight
+                    if (PED.IS_PED_FACING_PED(ourped, inRange[i], AIM_FOV) and FOV_CHECK == true) or (FOV_CHECK == false) then --check for FOV
                         --shooting done here, we have all preloads
                         local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
                         local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
@@ -1400,6 +1403,16 @@ end)
 menu.slider(silentAimSettings, "Silent Aimbot FOV", {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
     AIM_FOV = value / 10
 end)
+
+menuToggle(silentAimSettings, "Vehicle Mode", {"silentaimvehicle", "silentvehice", "saveh"}, "Removes line-of-sight checks. Done to make silent aim work for vehicles. Please do note that the FOV is taken FROM THE VEHICLE, NOT FROM WHERE YOU ARE FACING.", function (on)
+    if on then
+        LOS_CHECK = false
+    else
+        LOS_CHECK = true
+    end
+end)
+
+menu.divider(silentAimSettings, "-----------------")
 
 menuToggle(silentAimSettings, "Silent Aimbot Head", {"silentaimhead", "silenthead", "saimhead"}, "Makes the aimbot target the head. Probably doesn't look legitimate, but ok.", function(on)
     if on then
