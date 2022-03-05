@@ -108,6 +108,7 @@ local setPedCombatAttr = PED.SET_PED_COMBAT_ATTRIBUTES
 local giveWeaponToPed = WEAPON.GIVE_WEAPON_TO_PED
 
 
+
 function SE_add_explosion(x, y, z, exptype, dmgscale, isheard, isinvis, camshake, nodmg)
     FIRE.ADD_EXPLOSION(x, y, z, exptype, dmgscale, isheard, isinvis, camshake, nodmg)
 end
@@ -2303,7 +2304,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             for g = -28, 0 do
                 for n = -1, 1 do
                     for a = -1, 1 do
-                        util.trigger_script_event(1 << pid, {1445703181, i, n, a})
+                        util.trigger_script_event(1 << pid, {1445703181, g, n, a})
                     end
                 end
                 wait(10)
