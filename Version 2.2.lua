@@ -266,6 +266,17 @@ local function netItAll(entity)
     end
 end
 
+local function get_waypoint_pos2()
+    if HUD.IS_WAYPOINT_ACTIVE() then
+        local blip = HUD.GET_FIRST_BLIP_INFO_ID(8)
+        local waypoint_pos = HUD.GET_BLIP_COORDS(blip)
+        return waypoint_pos
+    else
+        util.toast("NO_WAYPOINT_SET")
+    end
+end
+
+--[[
 local function get_waypoint_pos(callback)
     if HUD.IS_WAYPOINT_ACTIVE() then
         local blip = HUD.GET_FIRST_BLIP_INFO_ID(8)
@@ -275,6 +286,7 @@ local function get_waypoint_pos(callback)
         lang.toast("NO_WAYPOINT_SET")
     end
 end
+]]
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1044,6 +1056,50 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
+menu.divider(mFunFeats, "Proximity Mine Gun")
+
+PROX_Coords = {}
+PROX_Count = 1
+
+menuToggleLoop(mFunFeats, "Proximity Mine Gun", {"proxgun"}, "Only works on coordinates, not entities. For that, use sticky bomb gun.", function ()
+    local localped = getLocalPed()
+    if PED.IS_PED_SHOOTING(localped) then --check if we shooting
+        local pointer = memory.alloc() --allocate memory for coords
+        local junk = WEAPON.GET_PED_LAST_WEAPON_IMPACT_COORD(localped, pointer) --get pointer to coord
+        local coord = memory.read_vector3(pointer) --get coord (read from pointer)
+        if coord.x ~= 0.0 and coord.y ~= 0.0 and coord.z ~= 0.0 then --check for dud (if we didn't register the shot)
+            PROX_Coords[PROX_Count] = coord --assign coord to table
+            PROX_Count = PROX_Count + 1 --make the counter go up
+            if SE_Notifications then
+                util.toast("Proximity mine placed at " .. coord.x .. " " .. coord.y .. " " .. coord.z)
+            end
+        end
+        memory.free(pointer) --free the memory so we don't bruh moment the script
+    end
+end)
+
+
+
+menuToggleLoop(mFunFeats, "Enable/Disable Proximity Mines", {"enableprox", "proxon"}, "Makes the proximity mines actually check for if entities are by them.", function ()
+    if PROX_Coords ~= nil then
+        for i = 1, #PROX_Coords do
+            local pedTable = entities.get_all_peds_as_handles()
+            for a = 1, #pedTable do
+                if ENTITY.IS_ENTITY_IN_AREA(pedTable[a], PROX_Coords[i].x + 2, PROX_Coords[i].y + 2, PROX_Coords[i].z, PROX_Coords[i].x - 2, PROX_Coords[i].y - 2, PROX_Coords[i].z + 2, true, true, true) then
+                    SE_add_owned_explosion(getLocalPed(), PROX_Coords[i].x, PROX_Coords[i].y, PROX_Coords[i].z, 2, 10, true, false, 0.4)
+                end
+            end
+        end
+    end
+end)
+
+menuAction(mFunFeats, "Clear Proximity Mines", {"clearprox"}, "Clears all proximity mines that you've placed.", function ()
+    util.toast("Cleared all " .. #PROX_Coords .. " proximity mines!")
+    PROX_Coords = {}
+    PROX_Count = 1
+end)
+
+----------------------------------------------------------------------------------------------------
 menu.divider(mFunFeats, "Kill Aura")
 
 --preload
@@ -1465,6 +1521,38 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
+menu.divider(pvphelp, "Orbital Waypoint")
+
+--preload
+ORB_Sneaky = false
+
+menuAction(pvphelp, "Orbital Strike Waypoint", {"orbway", "orbwp"}, "Orbital Cannons your selected Waypoint.", function ()
+    local wpos = get_waypoint_pos2()
+    if SE_Notifications then
+        util.toast("Selected Waypoint Coordinates: " .. wpos.x .. " " .. wpos.y .. " " .. wpos.z)
+    end
+    if ORB_Sneaky then
+        for a = 1, 30 do
+            SE_add_explosion(wpos.x, wpos.y, wpos.z + 30 - a, 29, 10, true, false, 1, false)
+            SE_add_explosion(wpos.x, wpos.y, wpos.z + 30 - a, 59, 10, true, false, 1, false)
+            wait(30)
+        end
+    else
+        for i = 1, 30 do
+            SE_add_owned_explosion(getLocalPed(), wpos.x, wpos.y, wpos.z + 30 - i, 29, 10, true, false, 1)
+            SE_add_owned_explosion(getLocalPed(), wpos.x, wpos.y, wpos.z + 30 - i, 59, 10, true, false, 1)
+            wait(30)
+        end
+    end
+end)
+
+menuToggle(pvphelp, "Sneaky Explosion", {}, "Makes the orbital not blamed on you.", function (on)
+    if on then
+        ORB_Sneaky = true
+    else
+        ORB_Sneaky = false
+    end
+end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
@@ -2133,6 +2221,13 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     menuToggle(vehicletrolling, "Make Vehicle Invisible?", {"vehtrollinvis"}, "Makes the vehicle trolling vehicle invisible.", function(toggle)
         VehTroll_Invis = toggle
     end)
+
+
+    -----------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
 
     menu.divider(playerOtherTrolling, "Toss Features")
     local ptossf = menu.list(playerOtherTrolling, "Toss Features", {}, "")
