@@ -1322,6 +1322,8 @@ AIM_FOV = 1
 AIM_Dist = 300
 AIM_DMG = 30
 
+menu.divider(pvphelp, "Silent Aimbot")
+
 menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
     local ourped = getLocalPed()
     if PED.IS_PED_SHOOTING(ourped) then
@@ -1351,30 +1353,31 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
                         --shooting done here, we have all preloads
                         local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
                         local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
+                        local pveh = PED.GET_VEHICLE_PED_IS_IN(inRange[i], false)
                         if SE_Notifications then
                             util.toast("Targeted: " .. tostring(playerName))
                         end
                         local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(inRange[i], 0, 1, 0)
                         if AIM_Head then
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
-                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0, pveh, true)
                         end
                         if AIM_Spine2 then
                             --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
-                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0, pveh, true)
                         end
                         if AIM_Pelvis then
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
-                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0, pveh, true)
                         end
                         if AIM_Toe0 then
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
-                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0, pveh, true)
                         end
                         if AIM_RHand then
                             local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
-                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0)
+                            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, 736523883, getLocalPed(), true, false, 0, pveh, true)
                         end
                     end
                 end
@@ -1383,7 +1386,6 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
     end
 end)
 
-menu.divider(pvphelp, "Silent Aimbot Settings")
 local silentAimSettings = menu.list(pvphelp, "Silent Aim Settings", {}, "")
 
 menu.slider(silentAimSettings, "Silent Aimbot Damage", {"silentaimdamage", "silentdamage", "saimdamage"}, "The amount of damage Silent Aimbot does. Not accurate, sadly...", 1, 10000, 30, 10, function(value)
@@ -1445,6 +1447,9 @@ end)
 --SKEL_Pelvis 	11816
 --SKEL_R_Toe0 	20781
 --IK_R_Hand 	6286
+
+
+----------------------------------------------------------------------------------------------------
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
