@@ -766,7 +766,7 @@ menuAction(lobbyremove, "Freemode death all.", {"allfdeath"}, "Will probably not
         end
         for i = -1, 1 do
             for a = -1, 1 do
-                util.trigger_script_event(1 << pid, {916721383, i, a, 0, 26})
+                util.trigger_script_event(1 << p, {916721383, i, a, 0, 26})
             end
         end
     end
