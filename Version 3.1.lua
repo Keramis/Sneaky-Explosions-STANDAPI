@@ -1549,6 +1549,7 @@ menu.divider(pvphelp, "Auto Car-Suicide")
 
 --prealod
 CAR_S_sneaky = false
+CAR_S_BLACKLIST = {}
 
 menuToggleLoop(pvphelp, "Auto Car-Suicide", {"carexplode"}, "Automatically explodes your car when you are next to a player.", function()
     local ourped = getLocalPed()
@@ -1558,9 +1559,10 @@ menuToggleLoop(pvphelp, "Auto Car-Suicide", {"carexplode"}, "Automatically explo
         for i = 1, #pedTable do
             local handle = entities.pointer_to_handle(pedTable[i])
             if PED.IS_PED_A_PLAYER(handle) then
+                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
                 local v3 = entities.get_position(pedTable[i])
                 local dist = distanceBetweenTwoCoords(ourCoords, v3)
-                if dist < 3 and handle ~= getLocalPed() then
+                if dist < 3 and handle ~= getLocalPed() and not CAR_S_BLACKLIST[playerID] then
                     if CAR_S_sneaky then
                         SE_add_explosion(ourCoords.x, ourCoords.y, ourCoords.z, 2, 10, true, false, 0.1, false)
                     else
@@ -2984,11 +2986,19 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menu.divider(playerMain, "Settings")
 
-    menuToggle(playerMain, "Whitelist from Silent Aimbot", {"aimwhite"}, "Whitelists the selected player from silent aimbot.", function(on)
+    menuToggle(playerMain, "Blacklist from Silent Aimbot", {"aimblacklist"}, "Blacklists the selected player from silent aimbot.", function(on)
         if on then
             AIM_WHITELIST[pid] = true
         else
             AIM_WHITELIST[pid] = false
+        end
+    end)
+
+    menuToggle(playerMain, "Blacklist from Auto Car-Suicide", {"carbombblacklist"}, "Blacklists the selected player from flagging a Car Suicide Explosion.", function(on)
+        if on then
+            CAR_S_BLACKLIST[pid] = true
+        else
+            CAR_S_BLACKLIST[pid] = false
         end
     end)
 
