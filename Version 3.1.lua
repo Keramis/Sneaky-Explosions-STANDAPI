@@ -68,6 +68,14 @@ local function onStartup()
     SE_pImpactCoord = memory.alloc() -- memory allocation for explosion gun.
     SE_LocalPed = getLocalPed()
     SE_Notifications = false -- notifications globally
+    --------
+    SE_ArrayList = false --arraylist Global
+    SE_ArrayCount = 0 --arraylist count Global
+    SE_ArrayOffsetX = 0.0
+    SE_ArrayOffsetY = 0.0
+    SE_ArrayScale = 0.3 --arraylist text scale
+    SE_ArrayColor = {r = 1.0, g = 1.0, b = 1.0, a = 1.0} --arraylist text color
+    --------
     BA_visible = false -- block area visibility of props
     util.toast("Ran startup of " .. scriptName)
 end
@@ -881,7 +889,13 @@ SE_stickyCount = 1
 SE_stickyvec3 = {}
 SE_stickyvec3count = 1
 ----
+ARAY_StickyBombGun = false --ArrayList setup
+----
 menuToggleLoop(mFunFeats, "Improved Sticky Bomb Gun", {"sbgun"}, "Notes where or what you shot, to explode it later.", function ()
+    --[[
+    if SE_ArrayList then
+        ARAY_StickyBombGun = true
+    end]]
     local pped = getLocalPed() --get local ped, assign to "pped"
     if PED.IS_PED_SHOOTING(pped) then --check for shooting
         local tarEnt = memory.alloc() --allocate memory to get Target Entity
@@ -905,7 +919,17 @@ menuToggleLoop(mFunFeats, "Improved Sticky Bomb Gun", {"sbgun"}, "Notes where or
             end
         end
         memory.free(tarEnt)
+    end--[[
+    if SE_ArrayList then
+        if ARAY_StickyBombGun then
+            SE_ArrayCount = SE_ArrayCount + 1
+            --
+            directx.draw_text(SE_ArrayOffsetX, (SE_ArrayCount * 0.02) + SE_ArrayOffsetY, "Improved Sticky Bomb Gun", ALIGN_TOP_LEFT, SE_ArrayScale, SE_ArrayColor, false)
+            SE_ArrayCount = SE_ArrayCount - 1
+        end
+        ARAY_StickyBombGun = false
     end
+    ]]
 end)
 
 menuAction(mFunFeats, "Explode All Stickybombs", {"expsb"}, "Explodes all marked entities and coordinate with one stickybomb.", function ()
@@ -940,8 +964,14 @@ menu.divider(mFunFeats, "Extinciton Gun")
 
 MarkedForExt = {}
 MarkedForExtCount = 1
-
+----
+ARAY_ExtinctionGun = false --ArrayList setup
+----
 menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
+    --[[
+    if SE_ArrayList then
+        ARAY_ExtinctionGun = true
+    end]]
     local localPed = getLocalPed()
     if PED.IS_PED_SHOOTING(localPed) then
         local point = memory.alloc(4)
@@ -976,6 +1006,17 @@ menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
             end
         end
     end
+    --[[
+    if SE_ArrayList then
+        if ARAY_ExtinctionGun then
+            SE_ArrayCount = SE_ArrayCount + 1
+            --
+            directx.draw_text(SE_ArrayOffsetX, (SE_ArrayCount * 0.02) + SE_ArrayOffsetY, "Better Extinction Gun", ALIGN_TOP_LEFT, SE_ArrayScale, SE_ArrayColor, false)
+            SE_ArrayCount = SE_ArrayCount - 1
+        end
+        ARAY_ExtinctionGun = false
+    end
+    ]]
 end)
 
 menuAction(mFunFeats, "Extinct.", {}, "", function ()
@@ -1324,6 +1365,7 @@ LOS_CHECK = true
 FOV_CHECK = true
 --
 AIM_WHITELIST = {}
+AIM_NPCS = false
 --
 AIM_LEGITSILENT = true
 
@@ -1332,8 +1374,6 @@ menu.divider(pvphelp, "Silent Aimbot")
 menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
     local ourped = getLocalPed()
     if PED.IS_PED_SHOOTING(ourped) then
-        local pTable = {}
-        local pCount = 1
         local ourc = getEntityCoords(ourped)
         local entTable = entities.get_all_peds_as_pointers()
         local inRange = {}
@@ -1354,69 +1394,71 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
         --util.toast("Entities in range of // " .. AIM_Dist .. " // :" .. #inRange)
         for i = 1, #inRange do
             local coord = getEntityCoords(inRange[i])
-            if PED.IS_PED_A_PLAYER(inRange[i]) then --check if player
-                if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) and LOS_CHECK == true) or (LOS_CHECK == false) then --check if we have line of sight
-                    if (PED.IS_PED_FACING_PED(ourped, inRange[i], AIM_FOV) and FOV_CHECK == true) or (FOV_CHECK == false) then --check for FOV
-                        if not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])] then --check if PID doesn't match the whitelist
-                            if distanceBetweenTwoCoords(coord, getEntityCoords(ourped)) < 401 and AIM_LEGITSILENT and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) then --check if they're less than 401 meters away (hitscan), and in LOS
-                                --shooting done here, we have all preloads
-                                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
-                                local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
-                                local pveh = PED.GET_VEHICLE_PED_IS_IN(inRange[i], false)
-                                if SE_Notifications then
-                                    util.toast("Targeted: " .. tostring(playerName) .. " with Legit Aim")
-                                end
-                                local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ourped, 0, 1, 2)
-                                if AIM_Head then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Spine2 then
-                                    --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Pelvis then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Toe0 then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_RHand then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                            else
-                                --shooting done here, we have all preloads
-                                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
-                                local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
-                                local pveh = PED.GET_VEHICLE_PED_IS_IN(inRange[i], false)
-                                if SE_Notifications then
-                                    util.toast("Targeted: " .. tostring(playerName))
-                                end
-                                local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(inRange[i], 0, 1, 1)
-                                if AIM_Head then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Spine2 then
-                                    --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Pelvis then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_Toe0 then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
-                                end
-                                if AIM_RHand then
-                                    local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
-                                    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+            if (PED.IS_PED_A_PLAYER(inRange[i]) and not AIM_NPCS) or (not PED.IS_PED_A_PLAYER(inRange[i]) and AIM_NPCS) then --check if player
+                if not PED.IS_PED_DEAD_OR_DYING(inRange[i], 1) then --check for dead/dying
+                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) and LOS_CHECK == true) or (LOS_CHECK == false) then --check if we have line of sight
+                        if (PED.IS_PED_FACING_PED(ourped, inRange[i], AIM_FOV) and FOV_CHECK == true) or (FOV_CHECK == false) then --check for FOV
+                            if not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])] then --check if PID doesn't match the whitelist
+                                if distanceBetweenTwoCoords(coord, getEntityCoords(ourped)) < 401 and AIM_LEGITSILENT and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, inRange[i], 17) then --check if they're less than 401 meters away (hitscan), and in LOS
+                                    --shooting done here, we have all preloads
+                                    local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
+                                    local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
+                                    local pveh = PED.GET_VEHICLE_PED_IS_IN(inRange[i], false)
+                                    if SE_Notifications then
+                                        util.toast("Targeted: " .. tostring(playerName) .. " with Legit Aim")
+                                    end
+                                    local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ourped, 0, 1, 2)
+                                    if AIM_Head then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Spine2 then
+                                        --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Pelvis then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Toe0 then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_RHand then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                else
+                                    --shooting done here, we have all preloads
+                                    local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(inRange[i])
+                                    local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
+                                    local pveh = PED.GET_VEHICLE_PED_IS_IN(inRange[i], false)
+                                    if SE_Notifications then
+                                        util.toast("Targeted: " .. tostring(playerName))
+                                    end
+                                    local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(inRange[i], 0, 1, 1)
+                                    if AIM_Head then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 12844, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Spine2 then
+                                        --(​Ped ped, int boneId, float offsetX, float offsetY, float offsetZ)
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 24817, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Pelvis then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 11816, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_Toe0 then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 20781, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
+                                    if AIM_RHand then
+                                        local bonec = PED.GET_PED_BONE_COORDS(inRange[i], 6286, 0, 0, 0)
+                                        MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS_IGNORE_ENTITY(forwardOffset.x, forwardOffset.y, forwardOffset.z, bonec.x, bonec.y, bonec.z, AIM_DMG, true, weaponHash, getLocalPed(), true, false, bulletSpeed, pveh, true)
+                                    end
                                 end
                             end
                         end
@@ -1456,6 +1498,14 @@ menuToggle(silentAimSettings, "Legit Silent Aim", {"silentlegit"}, "If you have 
         AIM_LEGITSILENT = false
     end
 end, true)
+
+menuToggle(silentAimSettings, "Target ONLY NPCs", {"silentnpc"}, "Toggle this to ONLY silent aimbot NPCs. Toggle off for ONLY players.", function (on)
+    if on then
+        AIM_NPCS = true
+    else
+        AIM_NPCS = false
+    end
+end)
 
 menu.divider(silentAimSettings, "-----------------")
 
@@ -1547,7 +1597,7 @@ end)
 
 menu.divider(pvphelp, "Auto Car-Suicide")
 
---prealod
+--preload
 CAR_S_sneaky = false
 CAR_S_BLACKLIST = {}
 
@@ -2061,12 +2111,21 @@ menuAction(toolFeats, "Set every single thing that is a minute long to 0", {}, "
     ]]
 end)
 
+menu.divider(menuroot, "----------Settings----------")
 
 menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
     if on then
         SE_Notifications = true
     else
         SE_Notifications = false
+    end
+end)
+
+menuToggle(menuroot, "Enable/Disable ArrayList", {"arraylist"}, "God, please, save me. Save me from this.", function(on)
+    if on then
+        SE_ArrayList = true
+    else
+        SE_ArrayList = false
     end
 end)
 
