@@ -747,10 +747,14 @@ menuAction(lobbyremove, "AIO Kick All.", {"allaiokick", "allaiok"}, "Will probab
             wait(10) 
             util.trigger_script_event(1 << i, {0x23F74138, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
             wait(10) 
+            --[[
             util.trigger_script_event(1 << i, {0xAD63290E, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
             wait(10) 
+            ]]
+            --[[
             util.trigger_script_event(1 << i, {0x39624029, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
             wait(10) 
+            ]]
             util.trigger_script_event(1 << i, {-0x529CD6F2, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
             wait(10) 
             util.trigger_script_event(1 << i, {-0x756DBC8A, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
@@ -791,12 +795,14 @@ menuAction(lobbyremove, "AIO Kick All.", {"allaiokick", "allaiok"}, "Will probab
                 wait(10)
                 util.trigger_script_event(1 << i, {911179316, -38, -30, -75, -59, 85, 82})
                 wait(10)
+                --[[
                 for n = -10, -7 do
                     for a = -60, 60 do
                         util.trigger_script_event(1 << i, {0x39624029, n, 623656, a, 73473741, -7, 856844, -51251, 856844})
                         wait(10)
                     end
                 end
+                ]]
                 util.trigger_script_event(1 << i, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
                 wait(10)
                 util.trigger_script_event(1 << i, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
@@ -1242,6 +1248,7 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
+--[[
 menu.divider(mFunFeats, "Crystal Aura")
 
 CA_Radius = 20
@@ -1310,7 +1317,7 @@ end, true)
     else
         CA_Players = false
     end
-end)]]
+end)
 
 menuToggle(CA_settings, "Crystal Aura heard?", {}, "Makes the explosions heard/audible.", function (toggle)
     if toggle then
@@ -1344,7 +1351,7 @@ menuToggle(CA_settings, "Delete cars of peds?", {}, "Makes the peds' cars get de
     end
 end)
 
-
+]]
 ----------------------------------------------------------------------------------------------------
 
 menu.divider(mFunFeats, "PvP / PvE Helper")
@@ -1612,11 +1619,19 @@ menuToggleLoop(pvphelp, "Auto Car-Suicide", {"carexplode"}, "Automatically explo
                 local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
                 local v3 = entities.get_position(pedTable[i])
                 local dist = distanceBetweenTwoCoords(ourCoords, v3)
-                if dist < 3 and handle ~= getLocalPed() and not CAR_S_BLACKLIST[playerID] then
+                if dist < 5 and handle ~= getLocalPed() and not CAR_S_BLACKLIST[playerID] then
                     if CAR_S_sneaky then
                         SE_add_explosion(ourCoords.x, ourCoords.y, ourCoords.z, 2, 10, true, false, 0.1, false)
+                        SE_add_explosion(ourCoords.x - 4, ourCoords.y, ourCoords.z, 2, 20, false, true, 0.1, false)
+                        SE_add_explosion(ourCoords.x + 4, ourCoords.y, ourCoords.z, 2, 20, false, true, 0.1, false)
+                        SE_add_explosion(ourCoords.x, ourCoords.y - 4, ourCoords.z, 2, 20, false, true, 0.1, false)
+                        SE_add_explosion(ourCoords.x, ourCoords.y + 4, ourCoords.z, 2, 20, false, true, 0.1, false)
                     else
                         SE_add_owned_explosion(ourped, ourCoords.x, ourCoords.y, ourCoords.z, 2, 10, true, false, 0.1)
+                        SE_add_owned_explosion(ourped, ourCoords.x - 4, ourCoords.y, ourCoords.z, 2, 20, false, true, 0.1)
+                        SE_add_owned_explosion(ourped, ourCoords.x + 4, ourCoords.y, ourCoords.z, 2, 20, false, true, 0.1)
+                        SE_add_owned_explosion(ourped, ourCoords.x, ourCoords.y - 4, ourCoords.z, 2, 20, false, true, 0.1)
+                        SE_add_owned_explosion(ourped, ourCoords.x, ourCoords.y + 4, ourCoords.z, 2, 20, false, true, 0.1)
                     end
                 end
             end
@@ -2416,6 +2431,33 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
+    CU_SE_MAIN = 0
+    CU_SE_PARAM1 = 0
+    CU_SE_PARAM2 = 0
+    CU_SE_PARAM3 = 0
+    CU_SE_PARAM4 = 0
+
+    menuAction(ptoxic, "Send Custom Script Event", {"sendcustomse"}, "Advanced users only.", function ()
+        util.trigger_script_event(1 << pid, {CU_SE_MAIN, CU_SE_PARAM1, CU_SE_PARAM2, CU_SE_PARAM3, CU_SE_PARAM4})
+    end)
+
+    menu.slider(ptoxic, "Custom Script Event Hash", {"customsehash"}, "", -2147483648, 2147483647, 0, 1, function (value)
+        CU_SE_MAIN = value
+    end)
+
+    menu.slider(ptoxic, "Param1", {"customparam1"}, "", -2147483648, 2147483647, 0, 1, function (value)
+        CU_SE_PARAM1 = value
+    end)
+
+    menu.slider(ptoxic, "Param2", {"customparam2"}, "", -2147483648, 2147483647, 0, 1, function (value)
+        CU_SE_PARAM2 = value
+    end)
+
+    menu.slider(ptoxic, "Param3", {"customparam3"}, "", -2147483648, 2147483647, 0, 1, function (value)
+        CU_SE_PARAM3 = value
+    end)
+
+
     menuAction(ptoxic, "AIO kick.", {"aiok", "aiokick"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
         if SE_Notifications then
             util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
@@ -2440,10 +2482,14 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         wait(10) 
         util.trigger_script_event(1 << pid, {0x23F74138, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
         wait(10) 
+        --[[
         util.trigger_script_event(1 << pid, {0xAD63290E, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
-        wait(10) 
+        wait(10)
+        ]]
+        --[[ 
         util.trigger_script_event(1 << pid, {0x39624029, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
         wait(10) 
+        ]]
         util.trigger_script_event(1 << pid, {-0x529CD6F2, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
         wait(10) 
         util.trigger_script_event(1 << pid, {-0x756DBC8A, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
@@ -2484,12 +2530,13 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             wait(10)
             util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
             wait(10)
+            --[[
             for n = -10, -7 do
                 for a = -60, 60 do
                     util.trigger_script_event(1 << pid, {0x39624029, n, 623656, a, 73473741, -7, 856844, -51251, 856844})
                     wait(10)
                 end
-            end
+            end]]
             util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
             wait(10)
             util.trigger_script_event(1 << pid, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
