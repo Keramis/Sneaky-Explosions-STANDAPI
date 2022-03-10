@@ -2391,27 +2391,42 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menuAction(vehicletrolling, "Teleport Player Into Ocean", {"tpocean"}, "Telepots the player's vehicle into the ocean. May need multiple clicks.", function()
         local ped = getPlayerPed(pid)
+        local pc = getEntityCoords(ped)
+        local oldcoords = getEntityCoords(getLocalPed())
+        for o = 0, 10 do
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pc.x, pc.y, pc.z + 10, false, false, false)
+            wait(50)
+        end
         if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
             local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
-            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+            for a = 0, 10 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+                wait(100)
+            end
             if SE_Notifications then
                 util.toast("Teleported " .. getPlayerName_pid(pid) .. " into the farthest ocean!")
             end
         else
             util.toast("Player " .. getPlayerName_pid(pid) .. " is not in a vehicle!")
         end
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
     end)
 
     menuAction(vehicletrolling, "Teleport Player Onto Maze Bank", {"tpmazebank"}, "Telepots the player's vehicle onto the Maze Bank tower. May need multiple clicks.", function()
         local ped = getPlayerPed(pid)
+        local pc = getEntityCoords(ped)
+        local oldcoords = getEntityCoords(getLocalPed())
+        for o = 0, 10 do
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pc.x, pc.y, pc.z + 10, false, false, false)
+            wait(50)
+        end
         if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
-            local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
-            menu.trigger_commands("spectate " .. getPlayerName_pid(pid))
+            local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false) 
             for a = 0, 10 do
                 NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
                 ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, -76, -819, 327, false, false, false)
-                wait(10)
+                wait(100)
             end
             if SE_Notifications then
                 util.toast("Teleported " .. getPlayerName_pid(pid) .. " onto the Maze Bank tower!")
@@ -2419,8 +2434,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         else
             util.toast("Player " .. getPlayerName_pid(pid) .. " is not in a vehicle!")
         end
-        wait(500)
-        menu.trigger_commands("spectate " .. getPlayerName_pid(pid))
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
     end)
 
     -----------------------------------------------------------------------------------------------------------------------------------
