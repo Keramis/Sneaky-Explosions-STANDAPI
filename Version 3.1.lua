@@ -10,7 +10,8 @@
 
 ]]
 
-require("natives-1640181023")
+--require("natives-1640181023")
+util.require_natives(1640181023)
 
 util.keep_running()
 
@@ -894,11 +895,12 @@ menuAction(lobbyFeats, "Remove Vehicle Godmode for All (BETA)", {"allremovevehgo
 end)
 
 menuAction(lobbyFeats, "Teleport everyone's vehicles to ocean (BETA)", {"alltpvehocean"}, "Teleports everyone's vehicles into the ocean.", function()
+    local oldcoords = getEntityCoords(getLocalPed())
     for i = 0, 31 do
         if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
             local ped = getPlayerPed(i)
             local pedCoords = getEntityCoords(ped)
-            for c = 1, 3 do --teleports us to them so we load their veh
+            for c = 0, 5 do --teleports us to them so we load their veh
                 ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
                 wait(100)
             end
@@ -915,14 +917,16 @@ menuAction(lobbyFeats, "Teleport everyone's vehicles to ocean (BETA)", {"alltpve
             end
         end
     end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
 end)
 
 menuAction(lobbyFeats, "Teleport everyone's vehicles to Maze Bank (BETA)", {"alltpvehmazebank"}, "Teleports everyone's vehicles on top of the Maze Bank tower.", function()
+    local oldcoords = getEntityCoords(getLocalPed())
     for i = 0, 31 do
         if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
             local pped = getPlayerPed(i)
             local pedCoords = getEntityCoords(pped)
-            for c = 1, 3 do --teleports us to them so we load their veh
+            for c = 0, 5 do --teleports us to them so we load their veh
                 ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
                 wait(100)
             end
@@ -939,6 +943,7 @@ menuAction(lobbyFeats, "Teleport everyone's vehicles to Maze Bank (BETA)", {"all
             end
         end
     end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
 end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
