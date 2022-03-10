@@ -62,6 +62,17 @@ local function distanceBetweenTwoCoords(v3_1, v3_2)
     return distance
 end
 
+local function getPlayerName_ped(ped)
+    local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(ped)
+    local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
+    return playerName
+end
+
+local function getPlayerName_pid(pid)
+    local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(pid)
+    return playerName
+end
+
 local function onStartup()
     SE_impactCoord = memory.alloc()
     SE_impactinvismines = memory.alloc()
@@ -869,7 +880,7 @@ end)
 
 menu.divider(lobbyFeats, "Other Features")
 
-menuAction(lobbyFeats, "Remove Vehicle Godmode for All (BETA)", {}, "", function ()
+menuAction(lobbyFeats, "Remove Vehicle Godmode for All (BETA)", {"allremovevehgod"}, "Removes everyone's vehicle godmode, making them easier to kill :)", function ()
     for i = 0, 31 do
         if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
             local ped = getPlayerPed(i)
@@ -877,6 +888,24 @@ menuAction(lobbyFeats, "Remove Vehicle Godmode for All (BETA)", {}, "", function
                 local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
                 ENTITY.SET_ENTITY_CAN_BE_DAMAGED(veh, true)
                 ENTITY.SET_ENTITY_INVINCIBLE(veh, false)
+            end
+        end
+    end
+end)
+
+menuAction(lobbyFeats, "Teleport everyone's vehicle to ocean", {"alltpvehocean"}, "Teleports everyone's vehicles into the ocean.", function()
+    for i = 0, 31 do
+        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            local ped = getPlayerPed(i)
+            if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+                local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+                for a = 0, 10 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    wait(10)
+                end
+                for b = 0, 10 do
+                    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+                end
             end
         end
     end
@@ -2301,6 +2330,8 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     VehTroll_VehicleName = "adder"
     VehTroll_Invis = false
 
+    menu.divider(vehicletrolling, "Drop Vehicle")
+
     menuAction(vehicletrolling, "Drop vehicle on player", {}, "", function ()
         local ped = getPlayerPed(pid)
         local pc = getEntityCoords(ped)
@@ -2324,6 +2355,23 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         VehTroll_Invis = toggle
     end)
 
+    -----------------------------------------------------------------------------
+
+    menu.divider(vehicletrolling, "Teleport Player's Vehicle")
+
+    menuAction(vehicletrolling, "Teleport Player Into Ocean", {"tpocean"}, "Telepots the player's vehicle into the ocean. May need multiple clicks.", function()
+        local ped = getPlayerPed(pid)
+        if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+            local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+            if SE_Notifications then
+                util.toast("Teleported " .. getPlayerName_pid(pid) .. " into the farthest ocean!")
+            end
+        else
+            util.toast("Player " .. getPlayerName_pid(pid) .. " is not in a vehicle!")
+        end
+    end)
 
     -----------------------------------------------------------------------------------------------------------------------------------
 
