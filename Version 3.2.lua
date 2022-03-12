@@ -2167,6 +2167,7 @@ menuToggleLoop(vehicleFeats, "Unlock Vehicle that you shoot", {"unlockvehshot"},
                 VEHICLE.SET_VEHICLE_DOORS_LOCKED(entity, 1)
                 VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
                 VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
+                VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
             end
         end
     end
@@ -2205,6 +2206,7 @@ menuToggleLoop(vehicleFeats, "Unlock vehicle that you try to get into", {"unlock
             VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
             VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
             VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
+            VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
         end
     end
 end)
@@ -2217,6 +2219,18 @@ menuToggleLoop(vehicleFeats, "Turn Car On Instantly", {"turnvehonget"}, "Turns t
             VEHICLE.SET_VEHICLE_FIXED(veh)
             VEHICLE.SET_VEHICLE_ENGINE_HEALTH(veh, 1000)
             VEHICLE.SET_VEHICLE_ENGINE_ON(veh, true, true, false)
+        end
+    end
+end)
+
+menuToggleLoop(vehicleFeats, "Stop Vehicle On Getting In", {"stopvehonget"}, "Set's the car's velocity to 0 when you try to get into it. Useful on roads.", function ()
+    local localped = getLocalPed()
+    if PED.IS_PED_GETTING_INTO_A_VEHICLE(localped) then
+        local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localped)
+        if not VEHICLE.IS_VEHICLE_STOPPED(veh) then
+            ENTITY.FREEZE_ENTITY_POSITION(veh, true)
+            ENTITY.SET_ENTITY_VELOCITY(veh, 0, 0, 0)
+            ENTITY.FREEZE_ENTITY_POSITION(veh, false)
         end
     end
 end)
