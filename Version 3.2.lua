@@ -1951,96 +1951,6 @@ menu.slider(ePS, "Pickups Text Placement Y", {"epickjposy"}, "/100", 0, 100, 9, 
     EPS_picky = value / 100
 end)
 
-
-----
-menuToggleLoop(toolFeats, "Unlock Vehicle that you shoot", {"unlockvehshot"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
-    ::start::
-    local localPed = getLocalPed()
-    if PED.IS_PED_SHOOTING(localPed) then
-        local pointer = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
-        if isEntFound then
-            local entity = memory.read_int(pointer)
-            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
-                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
-                ---------------------------------------------
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    for i = 1, 20 do
-                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    util.toast("Has control.")
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
-            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    for i = 1, 20 do
-                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    if SE_Notifications then
-                        util.toast("Has control.")
-                    end
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entity, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
-            end
-        end
-    end
-end)
-
-menuToggleLoop(toolFeats, "Unlock vehicle that you try to get into", {"unlockvehget"}, "Unlocks a vehicle that you try to get into. This will work on locked player cars.", function ()
-    ::start::
-    local localPed = getLocalPed()
-    local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localPed)
-    if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
-        local v = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED(v, 1)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(v, false)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(v, players.user(), false)
-        wait()
-    else
-        if SE_Notifications then
-            util.toast(tostring(veh))
-        end
-            if veh ~= 0 then
-            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-                for i = 1, 20 do
-                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-                    wait(100)
-                end
-            end
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-                util.toast("Waited 2 secs, couldn't get control!")
-                goto start
-            else
-                if SE_Notifications then
-                    util.toast("Has control.")
-                end
-            end
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
-        end
-    end
-end)
-
 menu.divider(toolFeats, "Settings")
 menu.slider(toolFeats, "Text Size (/10)", {"drscale"}, "Sets the scale of the text to the value you assign, divided by 10. This is because it only takes integer values.", 1, 50, 5, 1, function (value)
     DR_TXT_SCALE = value / 10
@@ -2206,6 +2116,112 @@ menuAction(toolFeats, "Set every single thing that is a minute long to 0", {}, "
     memory.write_int(memory.script_global(262145+23818),0)
     ]]
 end)
+
+--------------------------------------------------------------------------------------------------------------------------
+
+local vehicleFeats = menu.list(menuroot, "Vehicle Options", {"vehicleFeats"}, "")
+
+menuToggleLoop(vehicleFeats, "Unlock Vehicle that you shoot", {"unlockvehshot"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
+    ::start::
+    local localPed = getLocalPed()
+    if PED.IS_PED_SHOOTING(localPed) then
+        local pointer = memory.alloc(4)
+        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
+        if isEntFound then
+            local entity = memory.read_int(pointer)
+            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
+                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
+                ---------------------------------------------
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    for i = 1, 20 do
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    util.toast("Has control.")
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
+            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    for i = 1, 20 do
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    if SE_Notifications then
+                        util.toast("Has control.")
+                    end
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entity, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
+            end
+        end
+    end
+end)
+
+menuToggleLoop(vehicleFeats, "Unlock vehicle that you try to get into", {"unlockvehget"}, "Unlocks a vehicle that you try to get into. This will work on locked player cars.", function ()
+    ::start::
+    local localPed = getLocalPed()
+    local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localPed)
+    if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
+        local v = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED(v, 1)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(v, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(v, players.user(), false)
+        wait()
+    else
+        if SE_Notifications then
+            util.toast(tostring(veh))
+        end
+            if veh ~= 0 then
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                for i = 1, 20 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    wait(100)
+                end
+            end
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                util.toast("Waited 2 secs, couldn't get control!")
+                goto start
+            else
+                if SE_Notifications then
+                    util.toast("Has control.")
+                end
+            end
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
+        end
+    end
+end)
+
+menuToggleLoop(vehicleFeats, "Turn Car On Instantly", {"turnvehonget"}, "Turns the car engine on instantly when you get into it, so you don't have to wait.", function ()
+    local localped = getLocalPed()
+    if PED.IS_PED_GETTING_INTO_A_VEHICLE(localped) then
+        local veh = PED.GET_VEHICLE_PED_IS_ENTERING(localped)
+        if not VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(veh) then
+            VEHICLE.SET_VEHICLE_FIXED(veh)
+            VEHICLE.SET_VEHICLE_ENGINE_HEALTH(veh, 1000)
+            VEHICLE.SET_VEHICLE_ENGINE_ON(veh, true, true, false)
+        end
+    end
+end)
+
+--------------------------------------------------------------------------------------------------------------------------
 
 menu.divider(menuroot, "----------Settings----------")
 
@@ -2723,6 +2739,8 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             util.toast("Player " .. PLAYER.GET_PLAYER_NAME(pid) .. " done.")
         end
     end)
+
+    --hehehoho
 
     menu.divider(ptoxic, "Casino Blocks")
 
