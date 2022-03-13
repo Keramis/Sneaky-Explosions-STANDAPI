@@ -1783,23 +1783,6 @@ end
 
 VEH_MISSILE_SPEED = 10000
 
-menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
-    local p = getClosestPlayerWithRange(200)
-    local localped = getLocalPed()
-    local localCoords = getEntityCoords(localped)
-    if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)] then
-        if PED.IS_PED_IN_ANY_VEHICLE(localped) then
-            local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
-            if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
-                --did all prechecks, time to actually face them
-                local pcoords = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
-                local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
-                ENTITY.SET_ENTITY_ROTATION(veh, look.x, look.y, look.z, 1, true)
-            end
-        end
-    end
-end)
-
 menuAction(pvphelp, "Modify Missile Speed", {}, "Thank you so much Nowiry for this.", function ()
     local localped = getLocalPed()
     if PED.IS_PED_IN_ANY_VEHICLE(localped) then
