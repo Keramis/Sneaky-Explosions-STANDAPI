@@ -1738,21 +1738,80 @@ menuToggleLoop(pvphelp, "Vehicle Aimbot Toggle", {}, "", function ()
     end
 end)]]
 
+--TYSM NOWIRY AND AARON!
+
+local function setVehicleMissileSpeed(value)
+    local offsets = {0x10D8, 0x70, 0x60, 0x58}
+    local addr = entities.handle_to_pointer(PLAYER.PLAYER_PED_ID())
+    for i = 1, (#offsets - 1) do
+        -- make sure not to read from/write to a null pointer
+        if addr == 0 then
+            -- got a null pointer at some point
+            return -1.0
+        end
+        addr = memory.read_long(addr + offsets[i])
+    end
+    addr = addr + offsets[#offsets]
+    
+    if addr == 0 then
+        return -1.0
+    else
+        memory.write_float(addr, value)
+        --memory.read_float(addr)
+    end
+end
+
+function GetVehicleMissileSpeed()
+    local offsets = {0x10D8, 0x70, 0x60, 0x58}
+    local addr = entities.handle_to_pointer(PLAYER.PLAYER_PED_ID())
+    for i = 1, (#offsets - 1) do
+        -- make sure not to read from/write to a null pointer
+        if addr == 0 then
+            -- got a null pointer at some point
+            return -1.0
+        end
+        addr = memory.read_long(addr + offsets[i])
+    end
+    addr = addr + offsets[#offsets]
+    
+    if addr == 0 then
+        return -1.0
+    else
+        return memory.read_float(addr)
+    end
+end
+
+VEH_MISSILE_SPEED = 10000
+
 menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
     local p = getClosestPlayerWithRange(200)
     local localped = getLocalPed()
     local localCoords = getEntityCoords(localped)
-    if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) then
+    if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)] then
         if PED.IS_PED_IN_ANY_VEHICLE(localped) then
             local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
             if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
                 --did all prechecks, time to actually face them
-                local pcoords = getEntityCoords(p)
+                local pcoords = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
                 local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
                 ENTITY.SET_ENTITY_ROTATION(veh, look.x, look.y, look.z, 1, true)
             end
         end
     end
+end)
+
+menuAction(pvphelp, "Modify Missile Speed", {}, "Thank you so much Nowiry for this.", function ()
+    local localped = getLocalPed()
+    if PED.IS_PED_IN_ANY_VEHICLE(localped) then
+        local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
+        if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
+            setVehicleMissileSpeed(VEH_MISSILE_SPEED)
+        end
+    end
+end)
+
+menu.slider(pvphelp, "Set missile speed", {"vehmissilespeed"}, "Sets the speed of your missiles.", 1, 2147483647, 10000, 100, function (value)
+    VEH_MISSILE_SPEED = value
 end)
 
 ----------------------------------------------------------------------------------------------------
@@ -3397,6 +3456,9 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         noNeedModel(util.joaat("tug"))
     end)
 
+    menuToggleLoop(playerTools, "Remove Player Godmode (BETA)", {"rmgod"}, "Removes the player's godmode, if they're not on a good paid menu.", function ()
+        util.trigger_script_event(1 << pid, {801199324, pid, 869796886})
+    end)
 
     ----------------------------------------------------------------------------
 
