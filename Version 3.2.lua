@@ -1742,7 +1742,7 @@ menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the clos
     local p = getClosestPlayerWithRange(200)
     local localped = getLocalPed()
     local localCoords = getEntityCoords(localped)
-    if p ~= nil then
+    if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) then
         if PED.IS_PED_IN_ANY_VEHICLE(localped) then
             local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
             if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
