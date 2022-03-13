@@ -247,11 +247,11 @@ local function getClosestPlayerWithRange(range)
         end
     end
     if tbl ~= nil then
+        local dist = 999999
         for i = 1, #tbl do
             if tbl[i] ~= getLocalPed() then
                 if PED.IS_PED_A_PLAYER(tbl[i]) then
                     local tarcoords = getEntityCoords(tbl[i])
-                    local dist = 999999
                     local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
                     if e < dist then
                         dist = e
@@ -1783,7 +1783,7 @@ end
 
 VEH_MISSILE_SPEED = 10000
 
-menuAction(pvphelp, "Modify Missile Speed (heli and plane)", {}, "Thank you so much Nowiry for this.", function ()
+menuAction(pvphelp, "Modify Missile Speed (for helis, or jets)", {}, "Thank you so much Nowiry for this.", function ()
     local localped = getLocalPed()
     if PED.IS_PED_IN_ANY_VEHICLE(localped) then
         local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
@@ -1795,6 +1795,138 @@ end)
 
 menu.slider(pvphelp, "Set missile speed", {"vehmissilespeed"}, "Sets the speed of your missiles.", 1, 2147483647, 10000, 100, function (value)
     VEH_MISSILE_SPEED = value
+end)
+
+----------------------------------------------------------------------------------------------------
+
+menu.divider(pvphelp, "RPG Aimbot")
+
+MISL_FRC = false
+MISL_RAD = 300
+MISL_SPD = 100
+MISL_LOS = true
+
+--oppressor mk1/2 rocket hash: w_ex_vehiclemissile_3 (for later)
+--Later: block rockets (spawn walls when detecting they are in range)
+
+menu.toggle(pvphelp, "RPG Aimbot / Most Vehicles", {"rpgaim"}, "You heard me. Only the REGULAR RPG, not the homing one. Works on vehicles as well, such as Lazer or Buzzard. No guarantees, though!", function (on)
+    if on then
+        MISL_FRC = true
+        local rockethash = util.joaat("w_lr_rpg_rocket")
+        util.create_thread(function()
+            while MISL_FRC do
+                local localped = getLocalPed()
+                local localcoords = getEntityCoords(getLocalPed())
+                --if RRocket ~= 0 then
+                    RRocket = OBJECT.GET_CLOSEST_OBJECT_OF_TYPE(localcoords.x, localcoords.y, localcoords.z, 10, rockethash, false, true, true, true)
+                --else
+                  --  util.toast("rocket exists")
+                --end
+                local p = getClosestPlayerWithRange(MISL_RAD)
+                ----
+                if (RRocket ~= 0) and (p ~= nil) and (not PED.IS_PED_DEAD_OR_DYING(p)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)]) and (PED.IS_PED_SHOOTING(localped)) then
+                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and MISL_LOS) or not MISL_LOS then
+                        if SE_Notifications then
+                            util.toast("Precusors done!")
+                        end
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(RRocket) then
+                            for i = 1, 10 do
+                                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                            end
+                        else
+                            if SE_Notifications then
+                                util.toast("has control")
+                            end
+                        end
+                        while ENTITY.DOES_ENTITY_EXIST(RRocket) do
+                            if SE_Notifications then
+                                util.toast("rocket exists")
+                            end
+                            local pcoords = PED.GET_PED_BONE_COORDS(p, 20781, 0, 0, 0)
+                            local lc = getEntityCoords(RRocket)
+                            local look = util.v3_look_at(lc, pcoords)
+                            local dir = util.rot_to_dir(look)
+                            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
+                            wait()
+                        end
+                        --do code here, all precursors done.
+                    end
+                end
+                wait()
+            end
+        end)
+    else
+        MISL_FRC = false
+    end
+end)
+
+menu.toggle(pvphelp, "Oppressor Aimbot", {"oppressoraim"}, "Why.. why tf would you do this", function (on)
+    if on then
+        MISL_FRC = true
+        local rockethash = util.joaat("w_ex_vehiclemissile_3")
+        util.create_thread(function()
+            while MISL_FRC do
+                local localped = getLocalPed()
+                local localcoords = getEntityCoords(getLocalPed())
+                --if RRocket ~= 0 then
+                    RRocket = OBJECT.GET_CLOSEST_OBJECT_OF_TYPE(localcoords.x, localcoords.y, localcoords.z, 10, rockethash, false, true, true, true)
+                --else
+                  --  util.toast("rocket exists")
+                --end
+                local p = getClosestPlayerWithRange(MISL_RAD)
+                ----
+                if (RRocket ~= 0) and (p ~= nil) and (not PED.IS_PED_DEAD_OR_DYING(p)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)]) and (PED.IS_PED_SHOOTING(localped)) then
+                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and MISL_LOS) or not MISL_LOS then
+                        if SE_Notifications then
+                            util.toast("Precusors done!")
+                        end
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(RRocket) then
+                            for i = 1, 10 do
+                                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                            end
+                        else
+                            if SE_Notifications then
+                                util.toast("has control")
+                            end
+                        end
+                        while ENTITY.DOES_ENTITY_EXIST(RRocket) do
+                            if SE_Notifications then
+                                util.toast("rocket exists")
+                            end
+                            local pcoords = PED.GET_PED_BONE_COORDS(p, 20781, 0, 0, 0)
+                            local lc = getEntityCoords(RRocket)
+                            local look = util.v3_look_at(lc, pcoords)
+                            local dir = util.rot_to_dir(look)
+                            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
+                            wait()
+                        end
+                        --do code here, all precursors done.
+                    end
+                end
+                wait()
+            end
+        end)
+    else
+        MISL_FRC = false
+    end
+end)
+
+menu.slider(pvphelp, "RPG Aimbot Radius", {"msl_frc_rad"}, "Range for missile aimbot, e.g. how far the person can be away.", 1, 10000, 300, 10, function (value)
+    MISL_RAD = value
+end)
+
+menu.slider(pvphelp, "RPG Speed Multiplier", {"msl_spd_mult"}, "Multiplier for speed. Default is 100, it's good.", 1, 10000, 100, 100, function (value)
+    MISL_SPD = value
+end)
+
+menuToggle(pvphelp, "RPG LOS Remove", {}, "Removes line-of-sight checks. Do not turn this on unless you know what you're doing.", function (on)
+    if on then
+        MISL_LOS = false
+    else
+        MISL_LOS = true
+    end
 end)
 
 ----------------------------------------------------------------------------------------------------
