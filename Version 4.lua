@@ -1783,11 +1783,11 @@ end
 
 VEH_MISSILE_SPEED = 10000
 
-menuAction(pvphelp, "Modify Missile Speed", {}, "Thank you so much Nowiry for this.", function ()
+menuAction(pvphelp, "Modify Missile Speed (heli and plane)", {}, "Thank you so much Nowiry for this.", function ()
     local localped = getLocalPed()
     if PED.IS_PED_IN_ANY_VEHICLE(localped) then
         local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
-        if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
+        if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 or VEHICLE.GET_VEHICLE_CLASS(veh) == 16 then --vehicle class of heli
             setVehicleMissileSpeed(VEH_MISSILE_SPEED)
         end
     end
