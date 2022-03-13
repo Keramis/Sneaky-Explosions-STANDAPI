@@ -123,6 +123,10 @@ local function fastNet(entity, playerID)
     wait(10)
     ENTITY._SET_ENTITY_CLEANUP_BY_ENGINE(entity, false)
     wait(10)
+    if ENTITY.IS_ENTITY_AN_OBJECT(entity) then
+        NETWORK.OBJ_TO_NET(entity)
+    end
+    wait(10)
     if BA_visible then
         ENTITY.SET_ENTITY_VISIBLE(entity, true, 0)
     else
@@ -159,6 +163,10 @@ local function netIt(entity, playerID)
     ENTITY.SET_ENTITY_AS_MISSION_ENTITY(entity, true, false)
     wait(10)
     ENTITY._SET_ENTITY_CLEANUP_BY_ENGINE(entity, false)
+    wait(10)
+    if ENTITY.IS_ENTITY_AN_OBJECT(entity) then
+        NETWORK.OBJ_TO_NET(entity)
+    end
     wait(10)
     if BA_visible then
         ENTITY.SET_ENTITY_VISIBLE(entity, true, 0)
@@ -200,6 +208,10 @@ local function netItAll(entity)
     wait(10)
     ENTITY._SET_ENTITY_CLEANUP_BY_ENGINE(entity, false)
     wait(10)
+    if ENTITY.IS_ENTITY_AN_OBJECT(entity) then
+        NETWORK.OBJ_TO_NET(entity)
+    end
+    wait(10)
     if BA_visible then
         ENTITY.SET_ENTITY_VISIBLE(entity, true, 0)
     else
@@ -218,6 +230,41 @@ local function get_waypoint_pos2()
         return waypoint_pos
     else
         util.toast("NO_WAYPOINT_SET")
+    end
+end
+
+local function getClosestPlayerWithRange(range)
+    local pedPointers = entities.get_all_peds_as_pointers()
+    local rangesq = range * range
+    local ourCoords = getEntityCoords(getLocalPed())
+    local tbl = {}
+    local closest_player = 0
+    for i = 1, #pedPointers do
+        local tarcoords = entities.get_position(pedPointers[i])
+        local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+        if vdist <= rangesq then
+            tbl[#tbl+1] = entities.pointer_to_handle(pedPointers[i])
+        end
+    end
+    if tbl ~= nil then
+        for i = 1, #tbl do
+            if tbl[i] ~= getLocalPed() then
+                if PED.IS_PED_A_PLAYER(tbl[i]) then
+                    local tarcoords = getEntityCoords(tbl[i])
+                    local dist = 999999
+                    local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+                    if e < dist then
+                        dist = e
+                        closest_player = tbl[i]
+                    end
+                end
+            end
+        end
+    end
+    if closest_player ~= 0 then
+        return closest_player
+    else
+        return nil
     end
 end
 
@@ -634,6 +681,30 @@ menuAction(blockFeats, "Block LSC (4/4, top of the map)", {}, "", function ()
     noNeedModel(hash)
 end)
 
+menuAction(blockFeats, "Block Nearest Road", {}, "", function ()
+    local v3pointer = memory.alloc()
+    local headpointer = memory.alloc()
+    ----
+    local closecoord = getEntityCoords(getLocalPed())
+    PATHFIND.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(closecoord.x, closecoord.y, closecoord.z, v3pointer, headpointer, 1, 3.0, 0)
+    local v3memory = memory.read_vector3(v3pointer)
+    local headmemory = memory.read_float(headpointer)
+    ----
+    local hash = 309416120
+    requestModel(hash)
+    while not hasModelLoaded(hash) do wait() end
+    for i = 1, BA_iterations do
+        local a1 = OBJECT.CREATE_OBJECT(hash, v3memory.x, v3memory.y, v3memory.z, true, true, true)
+        ENTITY.SET_ENTITY_HEADING(a1, headmemory + 90)
+        netItAll(a1)
+        wait(100)
+    end
+    noNeedModel(hash)
+    ----
+    memory.free(v3pointer)
+    memory.free(headpointer)
+end)
+
 menu.divider(blockFeats, "Settings")
 
 menuToggle(blockFeats, "Are props visible?", {}, "Decide whether the blocking walls are visible or not.", function(on)
@@ -697,6 +768,9 @@ local function pizzaCAll()
     end
 end
 
+
+-----------------------------------------------------------------------------------------------------------------
+
 Pizzaall = menuAction(lobbyFeats, "Black Plague Crash All", {"plagueall"}, "Blocked by most menus.", function ()
     menu.show_warning(Pizzaall, 1, "This will crash everyone with the plague. Did you mean to click this?", pizzaCAll)
 end)
@@ -729,8 +803,6 @@ menuAction(lobbyremove, "Freemode death all.", {"allfdeath"}, "Will probably not
         end
     end
 end)
-
-
 
 TXC_SLOW = false
 
@@ -1419,7 +1491,7 @@ end)
 ----------------------------------------------------------------------------------------------------
 
 menu.divider(mFunFeats, "PvP / PvE Helper")
-local pvphelp = menu.list(mFunFeats, "PvP / PvE Helper", {}, "")
+local pvphelp = menu.list(mFunFeats, "PvP / PvE Helper", {"pvphelp"}, "")
 
 --preload
 AIM_Spine2 = false
@@ -1645,6 +1717,43 @@ end)
 --SKEL_R_Toe0 	20781
 --IK_R_Hand 	6286
 
+
+----------------------------------------------------------------------------------------------------
+
+menu.divider(pvphelp, "Vehicle Aimbot (experimental)")
+
+--[[ ugh, deprecated. I wasted an hour of my life on this goddamn bruh moment.
+menuToggleLoop(pvphelp, "Vehicle Aimbot Toggle", {}, "", function ()
+    local p = getClosestPlayerWithRange(200) --get closest player within 200 meters
+    local localped = getLocalPed()
+    local localCoords = getEntityCoords(localped)
+    if p ~= nil then --if the player isn't NIL
+        local pcoords = getEntityCoords(p)
+        local bottomlength = MISC.GET_DISTANCE_BETWEEN_COORDS(localCoords.x, localCoords.y, localCoords.z, pcoords.x, pcoords.y, pcoords.z, false) --by setting BOOL useZ to false, we get only the 2d plane. (later used in tangent)
+        local toplength = pcoords.z - localCoords.z
+        if ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) then
+            local pitch = math.atan(bottomlength, toplength)
+            -- local yaw = 
+        end
+    end
+end)]]
+
+menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
+    local p = getClosestPlayerWithRange(200)
+    local localped = getLocalPed()
+    local localCoords = getEntityCoords(localped)
+    if p ~= nil then
+        if PED.IS_PED_IN_ANY_VEHICLE(localped) then
+            local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
+            if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --vehicle class of heli
+                --did all prechecks, time to actually face them
+                local pcoords = getEntityCoords(p)
+                local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
+                ENTITY.SET_ENTITY_ROTATION(veh, look.x, look.y, look.z, 1, true)
+            end
+        end
+    end
+end)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -2487,6 +2596,41 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             util.toast("Player " .. getPlayerName_pid(pid) .. " is not in a vehicle!")
         end
         ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+    end)
+
+    menuToggleLoop(vehicletrolling, "FakeLag Player's Vehicle", {"vehfakelag"}, "Teleports the player's vehicle behind them a bit, simulating lag.", function ()
+        local ped = getPlayerPed(pid)
+        if PED.IS_PED_IN_ANY_VEHICLE(ped) then
+            local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+            local velocity = ENTITY.GET_ENTITY_VELOCITY(veh)
+            local oldcoords = getEntityCoords(ped)
+            wait(500)
+            local nowcoords = getEntityCoords(ped)
+            for a = 1, 10 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                wait()
+            end
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+            wait(200)
+            for b = 1, 10 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                wait()
+            end
+            ENTITY.SET_ENTITY_VELOCITY(veh, velocity.x, velocity.y, velocity.z)
+            for c = 1, 10 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                wait()
+            end
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, nowcoords.x, nowcoords.y, nowcoords.z, false, false, false)
+            for d = 1, 10 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                wait()
+            end
+            ENTITY.SET_ENTITY_VELOCITY(veh, velocity.x, velocity.y, velocity.z)
+            wait(500)
+        else
+            util.toast("Player " .. getPlayerName_pid(pid) .. " is not in a vehicle!")
+        end
     end)
 
     -----------------------------------------------------------------------------------------------------------------------------------
