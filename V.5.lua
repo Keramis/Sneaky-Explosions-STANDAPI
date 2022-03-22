@@ -15,7 +15,7 @@ util.require_natives(1640181023)
 
 util.keep_running()
 
-local scriptName = "KeramisScript V.4.5"
+local scriptName = "KeramisScript V.5.0"
 
 local menuroot = menu.my_root()
 local menuAction = menu.action
@@ -2262,6 +2262,104 @@ end)
 
 local toolFeats = menu.list(menuroot, "Tools", {}, "")
 
+TP_CAM = 0
+
+--thank you to: https://easings.net for the functions!
+local function easeOutCubic(x)
+    return 1 - ((1-x) ^ 3)
+end
+local function easeInCubic(x)
+    return x * x * x
+end
+local function easeInOutCubic(x) --Thank you QUICKNET for re-writing this function!
+    if(x < 0.5) then
+        return 4 * x * x * x;
+    else
+        return 1 - ((-2 * x + 2) ^ 3) / 2
+    end
+end
+
+CCAM = 0
+local whiteText = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoint with the camera being smooth.", function ()
+    local coord = 300
+    local speedModifier = 0.02
+    local wppos = get_waypoint_pos2()
+    local localped = getPlayerPed(players.user())
+    if wppos ~= nil then --cam setup here
+        if not CAM.DOES_CAM_EXIST(CCAM) then
+            CAM.DESTROY_ALL_CAMS(true)
+            CCAM = CAM.CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", true)
+            CAM.SET_CAM_ACTIVE(CCAM, true)
+            CAM.RENDER_SCRIPT_CAMS(true, false, 0, true, true, 0)
+        end
+        --
+        local pc = getEntityCoords(getPlayerPed(players.user()))
+        --
+        for i = 0, 1, speedModifier do --make the cam move up here
+            CAM.SET_CAM_COORD(CCAM, pc.x, pc.y, pc.z + easeOutCubic(i) * coord)
+            directx.draw_text(0.5, 0.5, tostring(easeOutCubic(i) * coord), 1, 0.6, whiteText, false)
+            local look = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), pc)
+            CAM.SET_CAM_ROT(CCAM, look.x, look.y, look.z, 2)
+            wait()
+        end
+        --CAM.DO_SCREEN_FADE_OUT(1000) --fade out the screen
+        ------------
+        local currentZ = CAM.GET_CAM_COORD(CCAM).z
+        local coordDiffx = wppos.x - pc.x
+        local coordDiffxy = wppos.y - pc.y
+        for i = 0, 1, speedModifier / 2 do --make the camera on x/y plane
+            CAM.SET_CAM_COORD(CCAM, pc.x + (easeInOutCubic(i) * coordDiffx), pc.y + (easeInOutCubic(i) * coordDiffxy), currentZ)
+            wait()
+        end
+        -- local groundZ = PATHFIND.GET_APPROX_HEIGHT_FOR_POINT(wppos.x, wppos.y)
+        -- ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, groundZ, false, false, false, false)
+        local success, ground_z
+        repeat
+            STREAMING.REQUEST_COLLISION_AT_COORD(wppos.x, wppos.y, wppos.z)
+            success, ground_z = util.get_ground_z(wppos.x, wppos.y)
+            util.yield()
+        until success
+        if not PED.IS_PED_IN_ANY_VEHICLE(localped, true) then --if they not in a vehicle
+            ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the player
+        else
+            local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
+            local v3Out = memory.alloc()
+            local headOut = memory.alloc()
+            PATHFIND.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(wppos.x, wppos.y, ground_z, v3Out, headOut, 1, 3.0, 0)
+            local head = memory.read_float(headOut)
+            memory.free(headOut)
+            memory.free(v3Out)
+            ENTITY.SET_ENTITY_COORDS(veh, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the vehicle
+            ENTITY.SET_ENTITY_HEADING(veh, head)
+        end
+        wait()
+        local pc2 = getEntityCoords(getPlayerPed(players.user()))
+        local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - pc2.z
+        local camcoordz = CAM.GET_CAM_COORD(CCAM).z
+        --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
+        for i = 0, 1, speedModifier / 2 do --move the camera down
+            CAM.SET_CAM_COORD(CCAM, pc2.x, pc2.y, camcoordz - (easeOutCubic(i) * coordDiffz) + 1)
+            if i > 0.6 then
+                local look2 = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), getEntityCoords(localped))
+                CAM.SET_CAM_ROT(CCAM, look2.x, look2.y, look2.z, 2)
+            end
+            wait()
+        end
+        -------------
+        ----
+        wait()
+        --camera deletion here
+        CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
+        if CAM.IS_CAM_ACTIVE(CCAM) then
+            CAM.SET_CAM_ACTIVE(CCAM, false)
+        end
+        CAM.DESTROY_CAM(CCAM, true)
+    else
+        util.toast("No waypoint set!")
+    end
+end)
+
 menuAction(toolFeats, "Teleport high up", {"tphigh"}, "Teleports you very high up, for testing parachutes/falldamage.", function ()
     local pcoords = getEntityCoords(getLocalPed())
     ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pcoords.x, pcoords.y, pcoords.z + 1000, false, false, false)
@@ -3759,15 +3857,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     -----------------------------------------------------------------------------------------------------------------------------------
 
-    menuAction(playerTools, "God Check", {"godcheck"}, "", function()
-        if (players.is_godmode(pid) and not players.is_in_interior(pid)) then
-            util.toast(players.get_name(pid) .. " is in godmode!")
-        elseif (players.is_in_interior(pid)) then
-            util.toast(players.get_name(pid) .. " is in an interior!")
-        else
-            util.toast(players.get_name(pid) .. " is not in godmode!")
-        end
-    end)
+    menu.divider(playerTools, "Move Check")
 
     --preload
     SE_waittime = 1000
@@ -3789,7 +3879,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-    menu.divider(playerTools, "Debug Features, in Testing/for testing.")
+    menu.divider(playerTools, "Pan.")
 
     Ptools_PanTable = {}
     Ptools_PanCount = 1
@@ -3839,6 +3929,18 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         Ptools_PanCount = 1
         Ptools_PanTable = {}
         noNeedModel(util.joaat("tug"))
+    end)
+
+    menu.divider(playerTools, "Godmode Tools")
+
+    menuAction(playerTools, "God Check", {"godcheck"}, "", function()
+        if (players.is_godmode(pid) and not players.is_in_interior(pid)) then
+            util.toast(players.get_name(pid) .. " is in godmode!")
+        elseif (players.is_in_interior(pid)) then
+            util.toast(players.get_name(pid) .. " is in an interior!")
+        else
+            util.toast(players.get_name(pid) .. " is not in godmode!")
+        end
     end)
 
     menuToggleLoop(playerTools, "Remove Player Godmode (BETA)", {"rmgod"}, "Removes the player's godmode, if they're not on a good paid menu.", function ()
