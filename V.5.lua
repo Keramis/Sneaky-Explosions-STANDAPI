@@ -2164,6 +2164,8 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
+menu.divider(pvphelp, "Legit Rapid Fire")
+
 LegitRapidFire = false
 
 menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quickly switches to grenades and back to your weapon after you shot something. Useful with Sniper, RPG, Grenade Launcher.", function(on)
