@@ -2061,6 +2061,7 @@ end)
 menu.divider(pvphelp, "Legit Rapid Fire")
 
 LegitRapidFire = false
+LegitRapidMS = 100
 
 menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quickly switches to grenades and back to your weapon after you shot something. Useful with Sniper, RPG, Grenade Launcher.", function(on)
     local localped = getLocalPed()
@@ -2074,9 +2075,8 @@ menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quick
                     local currentWP = memory.read_int(currentWpMem)
                     memory.free(currentWpMem)
                     WEAPON.SET_CURRENT_PED_WEAPON(localped, 2481070269, true) --2481070269 is grenade
-                    wait(10)
+                    wait(LegitRapidMS)
                     WEAPON.SET_CURRENT_PED_WEAPON(localped, currentWP, true)
-                    wait()
                 end
                 wait()
             end
@@ -2084,6 +2084,10 @@ menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quick
     else
         LegitRapidFire = false
     end
+end)
+
+menu.slider(pvphelp, "Legit Rapid Fire Delay (ms)", {"legitrapiddelay"}, "The delay that it takes to switch to grenade and back to the weapon.", 1, 1000, 100, 50, function (value)
+    LegitRapidMS = value
 end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
