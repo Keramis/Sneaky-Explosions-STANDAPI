@@ -74,6 +74,21 @@ local function getPlayerName_pid(pid)
     return playerName
 end
 
+--thank you to: https://easings.net for the functions!
+local function easeOutCubic(x)
+    return 1 - ((1-x) ^ 3)
+end
+local function easeInCubic(x)
+    return x * x * x
+end
+local function easeInOutCubic(x) --Thank you QUICKNET for re-writing this function!
+    if(x < 0.5) then
+        return 4 * x * x * x;
+    else
+        return 1 - ((-2 * x + 2) ^ 3) / 2
+    end
+end
+
 local function onStartup()
     SE_impactCoord = memory.alloc()
     SE_impactinvismines = memory.alloc()
@@ -2147,6 +2162,34 @@ menuToggle(pvphelp, "Car Suicide Sneaky", {"carexplodesneaky"}, "Makes the explo
     end
 end)
 
+----------------------------------------------------------------------------------------------------
+
+LegitRapidFire = false
+
+menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quickly switches to grenades and back to your weapon after you shot something. Useful with Sniper, RPG, Grenade Launcher.", function(on)
+    local localped = getLocalPed()
+    if on then
+        LegitRapidFire = true
+        util.create_thread(function ()
+            while LegitRapidFire do
+                if PED.IS_PED_SHOOTING(localped) then
+                    local currentWpMem = memory.alloc()
+                    local junk = WEAPON.GET_CURRENT_PED_WEAPON(localped, currentWpMem, 1)
+                    local currentWP = memory.read_int(currentWpMem)
+                    memory.free(currentWpMem)
+                    WEAPON.SET_CURRENT_PED_WEAPON(localped, 2481070269, true) --2481070269 is grenade
+                    wait(10)
+                    WEAPON.SET_CURRENT_PED_WEAPON(localped, currentWP, true)
+                    wait()
+                end
+                wait()
+            end
+        end)
+    else
+        LegitRapidFire = false
+    end
+end)
+
 -----------------------------------------------------------------------------------------------------------------------------------
 
 local debugFeats = menu.list(menuroot, "Debug Features", {}, "")
@@ -2264,26 +2307,11 @@ local toolFeats = menu.list(menuroot, "Tools", {}, "")
 
 TP_CAM = 0
 
---thank you to: https://easings.net for the functions!
-local function easeOutCubic(x)
-    return 1 - ((1-x) ^ 3)
-end
-local function easeInCubic(x)
-    return x * x * x
-end
-local function easeInOutCubic(x) --Thank you QUICKNET for re-writing this function!
-    if(x < 0.5) then
-        return 4 * x * x * x;
-    else
-        return 1 - ((-2 * x + 2) ^ 3) / 2
-    end
-end
-
 CCAM = 0
+speedModifier = 0.02
+coord = 300
 local whiteText = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
 menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoint with the camera being smooth.", function ()
-    local coord = 300
-    local speedModifier = 0.02
     local wppos = get_waypoint_pos2()
     local localped = getPlayerPed(players.user())
     if wppos ~= nil then --cam setup here
@@ -2339,11 +2367,13 @@ menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoin
         local camcoordz = CAM.GET_CAM_COORD(CCAM).z
         --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
         for i = 0, 1, speedModifier / 2 do --move the camera down
-            CAM.SET_CAM_COORD(CCAM, pc2.x, pc2.y, camcoordz - (easeOutCubic(i) * coordDiffz) + 1)
+            local pc23 = getEntityCoords(getPlayerPed(players.user()))-- extra for x/y
+            CAM.SET_CAM_COORD(CCAM, pc23.x, pc23.y, camcoordz - (easeOutCubic(i) * coordDiffz))
+            --[[
             if i > 0.6 then
                 local look2 = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), getEntityCoords(localped))
                 CAM.SET_CAM_ROT(CCAM, look2.x, look2.y, look2.z, 2)
-            end
+            end]]
             wait()
         end
         -------------
@@ -2360,6 +2390,27 @@ menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoin
     end
 end)
 
+local stpsettings = menu.list(toolFeats, "SmoothTP Settings", {}, "")
+
+menu.slider(stpsettings, "Speed Modifier (x) /10", {"stpspeed"}, "Speed Modifider for smooth-tp, multiplicative. This will divide by 10, as sliders cannot take non-integers", 1, 100, 10, 1, function(value)
+    local multiply = value / 10
+    if SE_Notifications then
+        util.toast("SmoothTP Speed Multiplier set to " .. tostring(multiply) .. "!")
+    end
+    speedModifier = 0.02 --set it again so it doesnt multiply over and over. This took too long to figure out....
+    speedModifier = speedModifier * multiply
+end)
+
+menu.slider(stpsettings, "Height of cam transition (meters)", {"stpheight"}, "Set the height for the camera when it's doing the transition.", 0, 10000, 300, 10, function (value)
+    local height = value
+    if SE_Notifications then
+        util.toast("SmoothTP Height set to " .. tostring(height) .. "!")
+    end
+    coord = height
+end)
+
+
+--
 menuAction(toolFeats, "Teleport high up", {"tphigh"}, "Teleports you very high up, for testing parachutes/falldamage.", function ()
     local pcoords = getEntityCoords(getLocalPed())
     ENTITY.SET_ENTITY_COORDS_NO_OFFSET(getLocalPed(), pcoords.x, pcoords.y, pcoords.z + 1000, false, false, false)
