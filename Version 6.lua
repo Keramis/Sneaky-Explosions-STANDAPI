@@ -825,24 +825,6 @@ menuToggle(lobbyremove, "Slower, but better AIO.", {}, "", function (on)
     end
 end)
 
-menuAction(lobbyremove, "Kick everyone that is in godmode.", {}, "Kicks everyone that is in godmode in your session.", function()
-    for i = 0, 31 do
-        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
-            if not players.is_in_interior(i) then --check for interior
-                if (not PLAYER.IS_PLAYER_READY_FOR_CUTSCENE(i)) and (not NETWORK.IS_PLAYER_IN_CUTSCENE(i)) then --check for cutscenes
-                    if players.is_godmode(i) then --check the actual god
-                        local pName = getPlayerName_pid(i)
-                        menu.trigger_commands("breakup " .. pName)
-                        menu.trigger_commands("kick " .. pName)
-                        util.toast(pName .. " removed.")
-                        wait(100)
-                    end
-                end
-            end
-        end
-    end
-end)
-
 ----------------------------------------------------------------------------
 
 local otherFeats = menu.list(lobbyFeats, "Other Features / Tools", {}, "")
