@@ -12,6 +12,8 @@
 
 --require("natives-1640181023")
 util.require_natives(1640181023)
+require("Universal_ped_list")
+require("Universal_objects_list")
 
 util.keep_running()
 
@@ -86,6 +88,154 @@ local function easeInOutCubic(x) --Thank you QUICKNET for re-writing this functi
         return 4 * x * x * x;
     else
         return 1 - ((-2 * x + 2) ^ 3) / 2
+    end
+end
+
+CCAM = 0
+STP_SPEED_MODIFIER = 0.02
+STP_COORD_HEIGHT = 300
+local whiteText = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+function SmoothTeleportToCord(v3coords)
+    local wppos = v3coords
+    local localped = getPlayerPed(players.user())
+    if wppos ~= nil then --cam setup here
+        if not CAM.DOES_CAM_EXIST(CCAM) then
+            CAM.DESTROY_ALL_CAMS(true)
+            CCAM = CAM.CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", true)
+            CAM.SET_CAM_ACTIVE(CCAM, true)
+            CAM.RENDER_SCRIPT_CAMS(true, false, 0, true, true, 0)
+        end
+        --
+        local pc = getEntityCoords(getPlayerPed(players.user()))
+        --
+        for i = 0, 1, STP_SPEED_MODIFIER do --make the cam move up here
+            CAM.SET_CAM_COORD(CCAM, pc.x, pc.y, pc.z + easeOutCubic(i) * STP_COORD_HEIGHT)
+            directx.draw_text(0.5, 0.5, tostring(easeOutCubic(i) * STP_COORD_HEIGHT), 1, 0.6, whiteText, false)
+            local look = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), pc)
+            CAM.SET_CAM_ROT(CCAM, look.x, look.y, look.z, 2)
+            wait()
+        end
+        --CAM.DO_SCREEN_FADE_OUT(1000) --fade out the screen
+        ------------
+        local currentZ = CAM.GET_CAM_COORD(CCAM).z
+        local coordDiffx = wppos.x - pc.x
+        local coordDiffxy = wppos.y - pc.y
+        for i = 0, 1, STP_SPEED_MODIFIER / 2 do --make the camera on x/y plane
+            CAM.SET_CAM_COORD(CCAM, pc.x + (easeInOutCubic(i) * coordDiffx), pc.y + (easeInOutCubic(i) * coordDiffxy), currentZ)
+            wait()
+        end
+        -- local groundZ = PATHFIND.GET_APPROX_HEIGHT_FOR_POINT(wppos.x, wppos.y)
+        -- ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, groundZ, false, false, false, false)
+        local success, ground_z
+        repeat
+            STREAMING.REQUEST_COLLISION_AT_COORD(wppos.x, wppos.y, wppos.z)
+            success, ground_z = util.get_ground_z(wppos.x, wppos.y)
+            util.yield()
+        until success
+        if not PED.IS_PED_IN_ANY_VEHICLE(localped, true) then --if they not in a vehicle
+            ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the player
+        else
+            local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
+            local v3Out = memory.alloc()
+            local headOut = memory.alloc()
+            PATHFIND.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(wppos.x, wppos.y, ground_z, v3Out, headOut, 1, 3.0, 0)
+            local head = memory.read_float(headOut)
+            memory.free(headOut)
+            memory.free(v3Out)
+            ENTITY.SET_ENTITY_COORDS(veh, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the vehicle
+            ENTITY.SET_ENTITY_HEADING(veh, head)
+        end
+        wait()
+        local pc2 = getEntityCoords(getPlayerPed(players.user()))
+        local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - pc2.z
+        local camcoordz = CAM.GET_CAM_COORD(CCAM).z
+        --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
+        for i = 0, 1, STP_SPEED_MODIFIER / 2 do --move the camera down
+            local pc23 = getEntityCoords(getPlayerPed(players.user()))-- extra for x/y
+            CAM.SET_CAM_COORD(CCAM, pc23.x, pc23.y, camcoordz - (easeOutCubic(i) * coordDiffz))
+            wait()
+        end
+        -------------
+        ----
+        wait()
+        --camera deletion here
+        CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
+        if CAM.IS_CAM_ACTIVE(CCAM) then
+            CAM.SET_CAM_ACTIVE(CCAM, false)
+        end
+        CAM.DESTROY_CAM(CCAM, true)
+    else
+        util.toast("No waypoint set!")
+    end
+end
+
+function SmoothTeleportToVehicle(pedInVehicle)
+    local wppos = getEntityCoords(pedInVehicle)
+    local localped = getPlayerPed(players.user())
+    --check for emtpy seats
+    local maxPassengers = VEHICLE.GET_VEHICLE_MAX_NUMBER_OF_PASSENGERS(veh)
+    local seatFree = false
+    local continueQ
+    local veh = PED.GET_VEHICLE_PED_IS_IN(pedInVehicle, false)
+    for i = -1, maxPassengers do --check for empty seats
+        seatFree = VEHICLE.IS_VEHICLE_SEAT_FREE(veh, i, false)
+        if seatFree then
+            continueQ = true
+        end
+    end
+    if seatFree == false then
+        util.toast("No seats available in said vehicle.")
+        continueQ = false
+    end
+    -- > --
+    if wppos ~= nil then --cam setup here
+        if not CAM.DOES_CAM_EXIST(CCAM) then
+            CAM.DESTROY_ALL_CAMS(true)
+            CCAM = CAM.CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", true)
+            CAM.SET_CAM_ACTIVE(CCAM, true)
+            CAM.RENDER_SCRIPT_CAMS(true, false, 0, true, true, 0)
+        end
+        --
+        local pc = getEntityCoords(getPlayerPed(players.user()))
+        --
+        for i = 0, 1, STP_SPEED_MODIFIER do --make the cam move up here
+            CAM.SET_CAM_COORD(CCAM, pc.x, pc.y, pc.z + easeOutCubic(i) * STP_COORD_HEIGHT)
+            directx.draw_text(0.5, 0.5, tostring(easeOutCubic(i) * STP_COORD_HEIGHT), 1, 0.6, whiteText, false)
+            local look = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), pc)
+            CAM.SET_CAM_ROT(CCAM, look.x, look.y, look.z, 2)
+            wait()
+        end
+        --CAM.DO_SCREEN_FADE_OUT(1000) --fade out the screen
+        ------------
+        local currentZ = CAM.GET_CAM_COORD(CCAM).z
+        local coordDiffx = wppos.x - pc.x
+        local coordDiffxy = wppos.y - pc.y
+        for i = 0, 1, STP_SPEED_MODIFIER / 2 do --make the camera on x/y plane
+            CAM.SET_CAM_COORD(CCAM, pc.x + (easeInOutCubic(i) * coordDiffx), pc.y + (easeInOutCubic(i) * coordDiffxy), currentZ)
+            wait()
+        end
+        PED.SET_PED_INTO_VEHICLE(localped, veh, i)
+        if continueQ then
+            wait()
+            local pc2 = getEntityCoords(getPlayerPed(players.user()))
+            local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - pc2.z
+            local camcoordz = CAM.GET_CAM_COORD(CCAM).z
+            --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
+            for i = 0, 1, STP_SPEED_MODIFIER / 2 do --move the camera down
+                local pc23 = getEntityCoords(pedInVehicle)-- extra for x/y
+                CAM.SET_CAM_COORD(CCAM, pc23.x, pc23.y, camcoordz - (easeOutCubic(i) * coordDiffz))
+                wait()
+            end
+        end
+        wait()
+        --camera deletion here
+        CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
+        if CAM.IS_CAM_ACTIVE(CCAM) then
+            CAM.SET_CAM_ACTIVE(CCAM, false)
+        end
+        CAM.DESTROY_CAM(CCAM, true)
+    else
+        util.toast("No waypoint set!")
     end
 end
 
@@ -353,6 +503,36 @@ local function getClosestNonPlayerPedWithRange(range)
     else
         return nil
     end
+end
+
+local function rqModel (hash)
+    STREAMING.REQUEST_MODEL(hash)
+    local count = 0
+    util.toast("Requesting model...")
+    while not STREAMING.HAS_MODEL_LOADED(hash) and count < 100 do
+        STREAMING.REQUEST_MODEL(hash)
+        count = count + 1
+        wait(10)
+    end
+    if not STREAMING.HAS_MODEL_LOADED(hash) then
+        util.toast("Tried for 1 second, couldn't load this specified model!")
+    end
+end
+
+local function spawnPedOnPlayer(hash, pid)
+    rqModel(hash)
+    local lc = getEntityCoords(getPlayerPed(pid))
+    local pe = entities.create_ped(26, hash, lc, 0)
+    STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
+    return pe
+end
+
+local function spawnObjectOnPlayer(hash, pid)
+    rqModel(hash)
+    local lc = getEntityCoords(getPlayerPed(pid))
+    local ob = entities.create_object(hash, lc)
+    STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
+    return ob
 end
 
 --[[
@@ -844,10 +1024,6 @@ MarkedForExtCount = 1
 ARAY_ExtinctionGun = false --ArrayList setup
 ----
 menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
-    --[[
-    if SE_ArrayList then
-        ARAY_ExtinctionGun = true
-    end]]
     local localPed = getLocalPed()
     if PED.IS_PED_SHOOTING(localPed) then
         local point = memory.alloc(4)
@@ -882,17 +1058,6 @@ menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
             end
         end
     end
-    --[[
-    if SE_ArrayList then
-        if ARAY_ExtinctionGun then
-            SE_ArrayCount = SE_ArrayCount + 1
-            --
-            directx.draw_text(SE_ArrayOffsetX, (SE_ArrayCount * 0.02) + SE_ArrayOffsetY, "Better Extinction Gun", ALIGN_TOP_LEFT, SE_ArrayScale, SE_ArrayColor, false)
-            SE_ArrayCount = SE_ArrayCount - 1
-        end
-        ARAY_ExtinctionGun = false
-    end
-    ]]
 end)
 
 menuAction(mFunFeats, "Extinct.", {}, "", function ()
@@ -1503,6 +1668,17 @@ menu.toggle(pvphelp, "RPG Aimbot / Most Vehicles", {"rpgaim"}, "You heard me. On
                         local aircount = 1
                         ----
                         Missile_Camera = 0
+
+                        --preload the fake rocket and the particle fx
+                        -- > -- Load the particleFX for the fakerocket so it networks to other players
+                        STREAMING.REQUEST_NAMED_PTFX_ASSET("core")
+                        while not STREAMING.HAS_NAMED_PTFX_ASSET_LOADED("core") do
+                            STREAMING.REQUEST_NAMED_PTFX_ASSET("core")
+                            wait()
+                        end
+                        GRAPHICS.USE_PARTICLE_FX_ASSET("core")
+                        -- > -- we now have loaded our PTFX for our fake rocket.
+                        GRAPHICS.START_PARTICLE_FX_NON_LOOPED_ON_ENTITY("exp_grd_rpg_lod", RRocket, 0, 0, 0, 0, 0, 0, 2, false, false, false)
                         --while the rocket exists, we do this vvvv
                         while ENTITY.DOES_ENTITY_EXIST(RRocket) do
                             if SE_Notifications then
@@ -1512,6 +1688,23 @@ menu.toggle(pvphelp, "RPG Aimbot / Most Vehicles", {"rpgaim"}, "You heard me. On
                             local lc = getEntityCoords(RRocket)
                             local look = util.v3_look_at(lc, pcoords)
                             local dir = util.rot_to_dir(look)
+                            -- > -- make the fake rocket sync to the real one
+                            local fakeOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(RRocket, 0, 0.5, 0)
+                            ENTITY.SET_ENTITY_COORDS(FakeRocket, fakeOffset.x, fakeOffset.y, fakeOffset.z, false, false, false, false) --(​Entity entity, float xPos, float yPos, float zPos, BOOL xAxis, BOOL yAxis, BOOL zAxis, BOOL clearArea)
+                            ENTITY.SET_ENTITY_ROTATION(FakeRocket, look.x, look.y, look.z, 2, true)
+                            -- // -- // --
+                            -- // -- // --
+                            STREAMING.REQUEST_NAMED_PTFX_ASSET("core")
+                            while not STREAMING.HAS_NAMED_PTFX_ASSET_LOADED("core") do
+                                STREAMING.REQUEST_NAMED_PTFX_ASSET("core")
+                                wait()
+                            end
+                            GRAPHICS.USE_PARTICLE_FX_ASSET("core")
+                            -- > -- we now have loaded our PTFX for our fake rocket.
+                            --(​const char* effectName, float xPos, float yPos, float zPos, float xRot, float yRot, float zRot, float scale, BOOL xAxis, BOOL yAxis, BOOL zAxis, BOOL p11)
+                            GRAPHICS.START_NETWORKED_PARTICLE_FX_NON_LOOPED_AT_COORD("exp_grd_rpg_lod", lc.x, lc.y, lc.z, 0, 0, 0, 0.4, false, false, false, true)
+                            -- // -- // --
+                            -- // -- // --
                             --airstrike air
                             if aircount < 2 and MISL_AIR then
                                 ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, 0, 0, 99990000, true, false, true, true)
@@ -1552,10 +1745,12 @@ menu.toggle(pvphelp, "RPG Aimbot / Most Vehicles", {"rpgaim"}, "You heard me. On
                                     end
                                 end
                                 --CAM.SET_CAM_PARAMS(Missile_Camera, lc.x, lc.y, lc.z + 1, look.x, look.y, look.z, 100, 0, 0, 0, 0) --(​Cam cam, float posX, float posY, float posZ, float rotX, float rotY, float rotZ, float fieldOfView, Any p8, int p9, int p10, int p11)
+                                ENTITY.SET_ENTITY_ROTATION(RRocket, look.x, look.y, look.z, 2, true)
                                 ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD * distx, dir.y * MISL_SPD * disty, dir.z * MISL_SPD * distz, true, false, true, true)
                                 wait()
                             else
                                 -- vanilla "aimbot"
+                                ENTITY.SET_ENTITY_ROTATION(RRocket, look.x, look.y, look.z, 2, true)
                                 ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
                                 wait()
                             end
@@ -1850,89 +2045,16 @@ end)
 
 local toolFeats = menu.list(menuroot, "Tools", {}, "")
 
-TP_CAM = 0
+menu.divider(toolFeats, "Smooth TP")
 
-CCAM = 0
-speedModifier = 0.02
-coord = 300
-local whiteText = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
 menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoint with the camera being smooth.", function ()
-    local wppos = get_waypoint_pos2()
-    local localped = getPlayerPed(players.user())
-    if wppos ~= nil then --cam setup here
-        if not CAM.DOES_CAM_EXIST(CCAM) then
-            CAM.DESTROY_ALL_CAMS(true)
-            CCAM = CAM.CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", true)
-            CAM.SET_CAM_ACTIVE(CCAM, true)
-            CAM.RENDER_SCRIPT_CAMS(true, false, 0, true, true, 0)
-        end
-        --
-        local pc = getEntityCoords(getPlayerPed(players.user()))
-        --
-        for i = 0, 1, speedModifier do --make the cam move up here
-            CAM.SET_CAM_COORD(CCAM, pc.x, pc.y, pc.z + easeOutCubic(i) * coord)
-            directx.draw_text(0.5, 0.5, tostring(easeOutCubic(i) * coord), 1, 0.6, whiteText, false)
-            local look = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), pc)
-            CAM.SET_CAM_ROT(CCAM, look.x, look.y, look.z, 2)
-            wait()
-        end
-        --CAM.DO_SCREEN_FADE_OUT(1000) --fade out the screen
-        ------------
-        local currentZ = CAM.GET_CAM_COORD(CCAM).z
-        local coordDiffx = wppos.x - pc.x
-        local coordDiffxy = wppos.y - pc.y
-        for i = 0, 1, speedModifier / 2 do --make the camera on x/y plane
-            CAM.SET_CAM_COORD(CCAM, pc.x + (easeInOutCubic(i) * coordDiffx), pc.y + (easeInOutCubic(i) * coordDiffxy), currentZ)
-            wait()
-        end
-        -- local groundZ = PATHFIND.GET_APPROX_HEIGHT_FOR_POINT(wppos.x, wppos.y)
-        -- ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, groundZ, false, false, false, false)
-        local success, ground_z
-        repeat
-            STREAMING.REQUEST_COLLISION_AT_COORD(wppos.x, wppos.y, wppos.z)
-            success, ground_z = util.get_ground_z(wppos.x, wppos.y)
-            util.yield()
-        until success
-        if not PED.IS_PED_IN_ANY_VEHICLE(localped, true) then --if they not in a vehicle
-            ENTITY.SET_ENTITY_COORDS(localped, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the player
-        else
-            local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
-            local v3Out = memory.alloc()
-            local headOut = memory.alloc()
-            PATHFIND.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(wppos.x, wppos.y, ground_z, v3Out, headOut, 1, 3.0, 0)
-            local head = memory.read_float(headOut)
-            memory.free(headOut)
-            memory.free(v3Out)
-            ENTITY.SET_ENTITY_COORDS(veh, wppos.x, wppos.y, ground_z, false, false, false, false) --teleport the vehicle
-            ENTITY.SET_ENTITY_HEADING(veh, head)
-        end
-        wait()
-        local pc2 = getEntityCoords(getPlayerPed(players.user()))
-        local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - pc2.z
-        local camcoordz = CAM.GET_CAM_COORD(CCAM).z
-        --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
-        for i = 0, 1, speedModifier / 2 do --move the camera down
-            local pc23 = getEntityCoords(getPlayerPed(players.user()))-- extra for x/y
-            CAM.SET_CAM_COORD(CCAM, pc23.x, pc23.y, camcoordz - (easeOutCubic(i) * coordDiffz))
-            --[[
-            if i > 0.6 then
-                local look2 = util.v3_look_at(CAM.GET_CAM_COORD(CCAM), getEntityCoords(localped))
-                CAM.SET_CAM_ROT(CCAM, look2.x, look2.y, look2.z, 2)
-            end]]
-            wait()
-        end
-        -------------
-        ----
-        wait()
-        --camera deletion here
-        CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
-        if CAM.IS_CAM_ACTIVE(CCAM) then
-            CAM.SET_CAM_ACTIVE(CCAM, false)
-        end
-        CAM.DESTROY_CAM(CCAM, true)
-    else
-        util.toast("No waypoint set!")
-    end
+    SmoothTeleportToCord(get_waypoint_pos2())
+end)
+
+menuAction(toolFeats, "Reset Camera", {"resetstp"}, "Rendering of script cams to false, along with destroying the current cam. For if you teleport into the ocean, and the camera DIES.", function ()
+    local renderingCam = CAM.GET_RENDERING_CAM()
+    CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
+    CAM.DESTROY_CAM(renderingCam, true)
 end)
 
 local stpsettings = menu.list(toolFeats, "SmoothTP Settings", {}, "")
@@ -1942,8 +2064,8 @@ menu.slider(stpsettings, "Speed Modifier (x) /10", {"stpspeed"}, "Speed Modifide
     if SE_Notifications then
         util.toast("SmoothTP Speed Multiplier set to " .. tostring(multiply) .. "!")
     end
-    speedModifier = 0.02 --set it again so it doesnt multiply over and over. This took too long to figure out....
-    speedModifier = speedModifier * multiply
+    STP_SPEED_MODIFIER = 0.02 --set it again so it doesnt multiply over and over. This took too long to figure out....
+    STP_SPEED_MODIFIER = STP_SPEED_MODIFIER * multiply
 end)
 
 menu.slider(stpsettings, "Height of cam transition (meters)", {"stpheight"}, "Set the height for the camera when it's doing the transition.", 0, 10000, 300, 10, function (value)
@@ -1951,9 +2073,10 @@ menu.slider(stpsettings, "Height of cam transition (meters)", {"stpheight"}, "Se
     if SE_Notifications then
         util.toast("SmoothTP Height set to " .. tostring(height) .. "!")
     end
-    coord = height
+    STP_COORD_HEIGHT = height
 end)
 
+menu.divider(toolFeats, "-=-=-=-=-=-=-=-=-")
 
 --
 menuAction(toolFeats, "Teleport high up", {"tphigh"}, "Teleports you very high up, for testing parachutes/falldamage.", function ()
@@ -2517,6 +2640,102 @@ end)
 
 menu.slider(vehicleFeats, "Velocity Multiplier Multiplier (/100)", {"vehmultnum"}, "Divide by 100.", 1, 1000, 120, 10, function(val)
     SuperVehMultiply = val/100
+end)
+
+HAVE_SPAWN_FEATURES_BEEN_GENERATED = false
+SPAWN_FROZEN = false
+SPAWN_GOD = false
+local spawnFeats = menu.list(menuroot, "Spawn Features", {}, "")
+
+function GenerateSpawnFeatures()
+    if not HAVE_SPAWN_FEATURES_BEEN_GENERATED then
+        HAVE_SPAWN_FEATURES_BEEN_GENERATED = true
+        menu.divider(spawnFeats, "------------------")
+        
+        local spawnPeds = menu.list(spawnFeats, "Peds", {}, "")
+        SPAWNED_PEDS = {}
+        SPAWNED_PEDS_COUNT = 0
+        local timeBeforePeds = util.current_time_millis()
+        menu.action(spawnPeds, "Cleanup all spawned peds", {"cleanpeds"}, "Deletes all peds that you have spawned.", function()
+            if SPAWNED_PEDS_COUNT ~= 0 then
+                for i = 1, SPAWNED_PEDS_COUNT do
+                    entities.delete_by_handle(SPAWNED_PEDS[i])
+                end
+                SPAWNED_PEDS_COUNT = 0
+                SPAWNED_PEDS = {}
+            else
+                util.toast("No peds left!")
+            end
+        end)
+        menu.divider(spawnPeds, "Spawns")
+        for i = 1, #UNIVERSAL_PEDS_LIST do
+            menu.action(spawnPeds, "Spawn " .. tostring(UNIVERSAL_PEDS_LIST[i]), {"catspawnped " .. tostring(UNIVERSAL_PEDS_LIST[i])}, "", function()
+                SPAWNED_PEDS_COUNT = SPAWNED_PEDS_COUNT + 1
+                SPAWNED_PEDS[SPAWNED_PEDS_COUNT] = spawnPedOnPlayer(util.joaat(UNIVERSAL_PEDS_LIST[i]), players.user())
+                if SPAWN_FROZEN then
+                    ENTITY.FREEZE_ENTITY_POSITION(SPAWNED_PEDS[SPAWNED_PEDS_COUNT], true)
+                end
+                if SPAWN_GOD then
+                    ENTITY.SET_ENTITY_INVINCIBLE(SPAWNED_PEDS[SPAWNED_PEDS_COUNT], true)
+                end
+            end)
+            if i % 32 == 0 then
+                wait()
+            end
+        end
+        local timeAfterPeds = util.current_time_millis()
+
+        util.toast("It took about " .. timeAfterPeds - timeBeforePeds .. " milliseconds to generate ped spawn features!")
+        ----------------------------------------------------------------------------
+        local spawnObjs = menu.list(spawnFeats, "Objects", {}, "")
+        SPAWNED_OBJS = {}
+        SPAWNED_OBJ_COUNT = 0
+        local timeBeforeObjs = util.current_time_millis()
+        menu.action(spawnObjs, "Cleanup all spawned objects", {"cleanobjs"}, "Deletes all objects that you have spawned.", function()
+            if SPAWNED_OBJ_COUNT ~= 0 then
+                for i = 1, SPAWNED_OBJ_COUNT do
+                    entities.delete_by_handle(SPAWNED_OBJS[i])
+                end
+                SPAWNED_OBJS = {}
+                SPAWNED_OBJ_COUNT = 0
+            else
+                util.toast("No objects left!")
+            end
+        end)
+        for i = 1, #UNIVERSAL_OBJECTS_LIST do
+            menu.action(spawnObjs, "Spawn " .. tostring(UNIVERSAL_OBJECTS_LIST[i]), {"catspawnobj " .. tostring(UNIVERSAL_OBJECTS_LIST[i])}, "", function ()
+                SPAWNED_OBJ_COUNT = SPAWNED_OBJ_COUNT + 1
+                SPAWNED_OBJS[SPAWNED_OBJ_COUNT] = spawnObjectOnPlayer(util.joaat(tostring(UNIVERSAL_OBJECTS_LIST[i])), players.user())
+                if SPAWN_FROZEN then
+                    ENTITY.FREEZE_ENTITY_POSITION(SPAWNED_OBJS[SPAWNED_OBJ_COUNT], true)
+                end
+                if SPAWN_GOD then
+                    ENTITY.SET_ENTITY_INVINCIBLE(SPAWNED_OBJS[SPAWNED_OBJ_COUNT], true)
+                end
+            end)
+            if i % 100 == 0 then
+                wait()
+            end
+        end
+        local timeAfterObjs = util.current_time_millis()
+
+        util.toast("It took about " .. timeAfterObjs - timeBeforeObjs .. " milliseconds to generate object spawn features!")
+
+        -----
+
+        menu.toggle(spawnFeats, "Spawn frozen?", {}, "This will spawn the peds/objects frozen in place.", function(on)
+            SPAWN_FROZEN = on
+        end)
+        menu.toggle(spawnFeats, "Spawn godmode?", {}, "This will spawn the peds/objects unable to take damage.", function(on)
+            SPAWN_GOD = on
+        end)
+    else
+        util.toast("Spawn features already have been generated!")
+    end
+end
+
+menuAction(spawnFeats, "Generate spawn features", {}, "Generates the spawn features. This is not done automatically due to it taking time/causing lag.", function()
+    GenerateSpawnFeatures()
 end)
 
 -- CoolFlareFly = false
@@ -3260,6 +3479,18 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
             local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
             ENTITY.SET_ENTITY_CAN_BE_DAMAGED(veh, true)
             ENTITY.SET_ENTITY_INVINCIBLE(veh, false)
+        end
+    end)
+
+    menu.divider(playerTools, "Smooth-Teleport")
+
+    menuAction(playerTools, "Smooth Teleport", {"stp"}, "Smooth-Teleport to player. If they are in a vehicle, it smooth-teleports into their vehicle.", function()
+        local targetPed = getPlayerPed(pid)
+        local targetCoords = getEntityCoords(targetPed)
+        if not PED.IS_PED_IN_ANY_VEHICLE(targetPed, true) then
+            SmoothTeleportToCord(targetCoords)
+        else
+            SmoothTeleportToVehicle(targetPed)
         end
     end)
 
