@@ -661,3 +661,72 @@ function AIOKickAll()
     end
     wait(100)
 end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- OTHER LOBBY FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+function RemoveVehicleGodmodeForAll()
+    for i = 0, 31 do
+        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            local ped = getPlayerPed(i)
+            if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+                local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+                ENTITY.SET_ENTITY_CAN_BE_DAMAGED(veh, true)
+                ENTITY.SET_ENTITY_INVINCIBLE(veh, false)
+            end
+        end
+    end
+end
+
+function TeleportEveryonesVehicleToOcean()
+    local oldcoords = getEntityCoords(GetLocalPed())
+    for i = 0, 31 do
+        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            local ped = getPlayerPed(i)
+            local pedCoords = getEntityCoords(ped)
+            for c = 0, 5 do --teleports us to them so we load their veh
+                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
+                wait(100)
+            end
+            if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+                local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+                for a = 0, 10 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+                    wait(100)
+                end
+                for b = 0, 10 do
+                    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+                end
+            end
+        end
+    end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+end
+
+function TeleportEveryonesVehicleToMazeBank()
+    local oldcoords = getEntityCoords(GetLocalPed())
+    for i = 0, 31 do
+        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            local pped = getPlayerPed(i)
+            local pedCoords = getEntityCoords(pped)
+            for c = 0, 5 do --teleports us to them so we load their veh
+                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
+                wait(100)
+            end
+            if PED.IS_PED_IN_ANY_VEHICLE(pped, false) then
+                local veh = PED.GET_VEHICLE_PED_IS_IN(pped, false)
+                for a = 0, 10 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, -76, -819, 327, false, false, false)
+                    wait(100)
+                end
+                for b = 0, 10 do
+                    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, -76, -819, 327, false, false, false)
+                end
+            end
+        end
+    end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+end
