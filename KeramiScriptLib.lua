@@ -679,13 +679,14 @@ function RemoveVehicleGodmodeForAll()
     end
 end
 
+VehTeleportLoadIterations = 20
 function TeleportEveryonesVehicleToOcean()
     local oldcoords = getEntityCoords(GetLocalPed())
     for i = 0, 31 do
         if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
             local ped = getPlayerPed(i)
             local pedCoords = getEntityCoords(ped)
-            for c = 0, 5 do --teleports us to them so we load their veh
+            for c = 0, VehTeleportLoadIterations do --teleports us to them so we load their veh
                 ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
                 wait(100)
             end
@@ -711,7 +712,7 @@ function TeleportEveryonesVehicleToMazeBank()
         if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
             local pped = getPlayerPed(i)
             local pedCoords = getEntityCoords(pped)
-            for c = 0, 5 do --teleports us to them so we load their veh
+            for c = 0, VehTeleportLoadIterations do --teleports us to them so we load their veh
                 ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pedCoords.x, pedCoords.y, pedCoords.z + 10, false, false, false)
                 wait(100)
             end
