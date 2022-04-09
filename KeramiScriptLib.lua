@@ -57,7 +57,7 @@ function EaseInOutCubic(x) --Thank you QUICKNET for re-writing this function!
     end
 end
 
--------------------------------------------------- START CAM FUNCTIONS --------------------------------------------------
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- CAM FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 function SmoothTeleportToCord(v3coords)
     local wppos = v3coords
@@ -203,7 +203,9 @@ function SmoothTeleportToVehicle(pedInVehicle)
     end
 end
 
--------------------------------------------------- END CAM FUNCTIONS --------------------------------------------------
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- CAM FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- NETWORK FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 function FastNet(entity, playerID)
     local netID = NETWORK.NETWORK_GET_NETWORK_ID_FROM_ENTITY(entity)
@@ -289,6 +291,10 @@ function NetIt(entity, playerID)
         ENTITY.SET_ENTITY_VISIBLE(entity, false, 0)
     end
 end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- NETWORK FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- POSITION FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 function Get_Waypoint_Pos2()
     if HUD.IS_WAYPOINT_ACTIVE() then
@@ -409,6 +415,10 @@ function GetClosestNonPlayerPedWithRange(range)
     end
 end
 
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- POSITION FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MODEL FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 function RqModel (hash)
     STREAMING.REQUEST_MODEL(hash)
     local count = 0
@@ -438,6 +448,8 @@ function SpawnObjectOnPlayer(hash, pid)
     STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
     return ob
 end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MODEL FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -731,3 +743,25 @@ function TeleportEveryonesVehicleToMazeBank()
     end
     ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
 end
+
+function CheckLobbyForGodmode()
+    local godcount = 0
+    for i = 0, 31 do
+        if NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            local pcoords = getEntityCoords(getPlayerPed(i))
+            if INTERIOR.GET_INTERIOR_AT_COORDS(pcoords.x, pcoords.y, pcoords.z) == 0 then --check for non-interior. Using native for less false flags.
+                if (not PLAYER.IS_PLAYER_READY_FOR_CUTSCENE(i)) and (not NETWORK.IS_PLAYER_IN_CUTSCENE(i)) then --check for cutscenes
+                    if players.is_godmode(i) then --check the actual god
+                        local pName = GetPlayerName_pid(i)
+                        util.toast(pName .. " is in godmode!")
+                        godcount = godcount + 1
+                        wait(100)
+                    end
+                end
+            end
+        end
+    end
+    util.toast(godcount .. " people in godmode!")
+end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- OTHER LOBBY FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
