@@ -438,3 +438,43 @@ function SpawnObjectOnPlayer(hash, pid)
     STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
     return ob
 end
+
+function PizzaCAll()
+    for p = 0, 31, 1 do
+        if p ~= players.user() and ENTITY.DOES_ENTITY_EXIST(getPlayerPed(p)) then
+            for i = 1, 10 do
+                local cord = getEntityCoords(getPlayerPed(p))
+                requestModel(-930879665)
+                wait(10)
+                requestModel(3613262246)
+                wait(10)
+                requestModel(452618762)
+                wait(10)
+                while not hasModelLoaded(-930879665) do wait() end
+                while not hasModelLoaded(3613262246) do wait() end
+                while not hasModelLoaded(452618762) do wait() end
+                local a1 = entities.create_object(-930879665, cord)
+                wait(10)
+                local a2 = entities.create_object(3613262246, cord)
+                wait(10)
+                local b1 = entities.create_object(452618762, cord)
+                wait(10)
+                local b2 = entities.create_object(3613262246, cord)
+                wait(300)
+                entities.delete_by_handle(a1)
+                entities.delete_by_handle(a2)
+                entities.delete_by_handle(b1)
+                entities.delete_by_handle(b2)
+                noNeedModel(452618762)
+                wait(10)
+                noNeedModel(3613262246)
+                wait(10)
+                noNeedModel(-930879665)
+                wait(10)
+            end
+            if SE_Notifications then
+                util.toast("Finished with player // " .. tostring(PLAYER.GET_PLAYER_NAME(p)) .. " // of index " .. p)
+            end
+        end
+    end
+end
