@@ -478,3 +478,139 @@ function PizzaCAll()
         end
     end
 end
+
+function AIOKickAll()
+    menu.trigger_commands("scripthost")
+    NETWORK.NETWORK_REQUEST_TO_BE_HOST_OF_THIS_SCRIPT()
+    for i = 0, 31 do
+        if i ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
+            util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(i) .. ", commencing AIO."))
+            util.trigger_script_event(1 << i, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-1308840134, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x4E0350C6, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x114C63AC, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x15F5B1D4, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x249FE11B, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x76B11968, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x9C050EC, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x3B873479, 1, 15, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x23F74138, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            --[[
+            util.trigger_script_event(1 << i, {0xAD63290E, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            ]]
+            --[[
+            util.trigger_script_event(1 << i, {0x39624029, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            ]]
+            util.trigger_script_event(1 << i, {-0x529CD6F2, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x756DBC8A, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x69532BA0, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x68C5399F, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x7DE8CAC0, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {0x285DDF33, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10) 
+            util.trigger_script_event(1 << i, {-0x177132B8, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+            wait(10)
+            --util.toast("Main block done. // AIO")
+            util.trigger_script_event(1 << i, {memory.script_global(1893548 + (1 + (i * 600) + 511)), i})
+            for a = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << i, {-65587051, 28, a, n})
+                    wait(10)
+                end
+            end
+            --util.toast("Second block done. // AIO")
+            for a = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << i, {1445703181, 28, a, n})
+                    wait(10)
+                end
+            end
+            --util.toast("Third block done. // AIO")
+            if TXC_SLOW then
+                wait(10)
+                util.trigger_script_event(1 << i, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+                wait(10)
+                util.trigger_script_event(1 << i, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+                wait(10)
+                util.trigger_script_event(1 << i, {2002459655, -1000000, -10000, -100000000})
+                wait(10)
+                util.trigger_script_event(1 << i, {911179316, -38, -30, -75, -59, 85, 82})
+                wait(10)
+                --[[
+                for n = -10, -7 do
+                    for a = -60, 60 do
+                        util.trigger_script_event(1 << i, {0x39624029, n, 623656, a, 73473741, -7, 856844, -51251, 856844})
+                        wait(10)
+                    end
+                end
+                ]]
+                util.trigger_script_event(1 << i, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+                wait(10)
+                util.trigger_script_event(1 << i, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
+                wait(10)
+                util.trigger_script_event(1 << i, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+                wait(10)
+                for g = -28, 0 do
+                    for n = -1, 1 do
+                        for a = -1, 1 do
+                            util.trigger_script_event(1 << i, {1445703181, i, n, a})
+                        end
+                    end
+                    wait(10)
+                end
+                --[[for a = -28, 20 do
+                    for n = -10, 2 do
+                        for b = -100, 100 do
+                            util.trigger_script_event(1 << i, {-1782442696, b, n, a})
+                            util.log("Number 6, iteration " .. b)
+                        end
+                        util.log("Number 7, iteration " .. n)
+                    end
+                    util.log("Number 8, iteration " .. a)
+                    wait(10)
+                end]]
+                for a = -11, 11 do
+                    util.trigger_script_event(1 << i, {2002459655, -1000000, a, -100000000})
+                end
+                for a = -10, 10 do
+                    for n = 30, -30 do
+                        util.trigger_script_event(1 << i, {911179316, a, n, -75, -59, 85, 82})
+                    end
+                end
+                for a = -10, 10 do
+                    util.trigger_script_event(1 << i, {-65587051, a, -1, -1})
+                end
+                util.trigger_script_event(1 << i, {951147709, i, 1000000, nil, nil}) 
+                for a = -10, 10 do
+                    util.trigger_script_event(1 << i, {-1949011582, a, 1518380048})
+                end
+                for a = -10, 4 do
+                    for n = -10, 5 do
+                        util.trigger_script_event(1 << i, {1445703181, 28, a, n})
+                    end
+                end
+            end
+            util.toast("Fourth block done. // AIO")
+            util.toast("Iteration " .. i .. " complete of AIO kick.")
+            util.toast("Player " .. PLAYER.GET_PLAYER_NAME(i) .. " done.")
+        end
+    end
+    wait(100)
+end
