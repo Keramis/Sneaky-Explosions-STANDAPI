@@ -439,6 +439,8 @@ function SpawnObjectOnPlayer(hash, pid)
     return ob
 end
 
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 function PizzaCAll()
     for p = 0, 31, 1 do
         if p ~= players.user() and ENTITY.DOES_ENTITY_EXIST(getPlayerPed(p)) then
@@ -479,6 +481,34 @@ function PizzaCAll()
     end
 end
 
+function FreemodeDeathAll()
+    for p = 0, 31 do
+        if p ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(p) then
+            for i = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << p, {-65587051, 28, i, n})
+                end
+            end
+            for i = -1, 1 do
+                for n = -1, 1 do
+                    util.trigger_script_event(1 << p, {1445703181, 28, i, n})
+                end
+            end
+            wait(100)
+            util.trigger_script_event(1 << p, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+            util.trigger_script_event(1 << p, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+            util.trigger_script_event(1 << p, {2002459655, -1000000, -10000, -100000000})
+            util.trigger_script_event(1 << p, {911179316, -38, -30, -75, -59, 85, 82})
+        end
+        for i = -1, 1 do
+            for a = -1, 1 do
+                util.trigger_script_event(1 << p, {916721383, i, a, 0, 26})
+            end
+        end
+    end
+end
+
+TXC_SLOW = false
 function AIOKickAll()
     menu.trigger_commands("scripthost")
     NETWORK.NETWORK_REQUEST_TO_BE_HOST_OF_THIS_SCRIPT()
