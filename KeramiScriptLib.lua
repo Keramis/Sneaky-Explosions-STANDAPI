@@ -441,6 +441,23 @@ end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
+function EveryoneExplodeSuicides()
+    for i = 0, 31, 1 do
+        if players.exists(i) then --checks for if the PID exists in session
+            local playerPed = getPlayerPed(i)
+            local playerCoords = getEntityCoords(playerPed)
+            if PED.IS_PED_IN_ANY_VEHICLE(playerPed, true) then
+                for a = 0, 50, 1 do --50 explosions to account for armored vehicles, using type 5, as a tank shell as well xD
+                    SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 5, 10, SEisExploAudible, SEisExploInvis, 0)
+                    wait(10)
+                end
+            else
+                SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 1, 10, SEisExploAudible, SEisExploInvis, 0)
+            end
+        end
+    end
+end
+
 function PizzaCAll()
     for p = 0, 31, 1 do
         if p ~= players.user() and ENTITY.DOES_ENTITY_EXIST(getPlayerPed(p)) then
