@@ -13,8 +13,13 @@
 --require("natives-1640181023")
 util.require_natives(1640181023)
 require("Universal_ped_list")
+util.toast("Loaded univesal ped list!")
 require("Universal_objects_list")
+util.toast("Loaded universal objects list!")
 require("KeramiScriptLib")
+util.toast("Loaded functions lib!")
+require("KeramiScriptLang")
+util.toast("Loaded language lib!")
 
 util.keep_running()
 
@@ -62,7 +67,7 @@ onStartup()
 
 --menu toggle for if the explosion is invisible or not, uses a GLOBAL 
 SEisExploInvis = true --set it to actually be true lmfao
-menuToggle(menuroot, "Invisible Explosion?", {"SE_invis", "seinvis"}, "Toggles whether the explosion will be invisible or not. On = Invisible. // BREAKS THE LONG-LASTING FIRE EFFECT OF THE MOLOTOV", function(on)
+menuToggle(menuroot, INVISIBLE_EXPLOSION_NAME, {"SE_invis", "seinvis"}, "Toggles whether the explosion will be invisible or not. On = Invisible. // BREAKS THE LONG-LASTING FIRE EFFECT OF THE MOLOTOV", function(on)
     SEisExploInvis = on
     if SE_Notifications then
         util.toast("Explosion invisibility set to " .. tostring(on))
@@ -71,7 +76,7 @@ end, true) --last "true" is makes invisibility enabled by default.
 
 --menu toggle for if the explosion is audible or not, uses a GLOBAL
 SEisExploAudible = true
-menuToggle(menuroot, "Audible Explosion?", {"SE_audible", "seaudible"}, "Toggles whether the explosion will be audible or not. On = Audible.", function(on)
+menuToggle(menuroot, AUDIBLE_EXPLOSION_NAME, {"SE_audible", "seaudible"}, "Toggles whether the explosion will be audible or not. On = Audible.", function(on)
     SEisExploAudible = on
     if SE_Notifications then
         util.toast("Explosion audability set to " .. tostring(on))
@@ -79,35 +84,35 @@ menuToggle(menuroot, "Audible Explosion?", {"SE_audible", "seaudible"}, "Toggles
 end)
 -----------------------------------------------------------------------------------------------------------------------------------
 
-local lobbyFeats = menu.list(menuroot, "Lobby Features", {}, "")
+local lobbyFeats = menu.list(menuroot, LOBBY_FEATURES_NAME, {}, "")
 
-local expFeats = menu.list(lobbyFeats, "Explosion Features", {}, "")
+local expFeats = menu.list(lobbyFeats, EXPLOSION_FEATURES_NAME, {}, "")
 
-menuAction(expFeats, "Everyone explode-suicides", {"allsuicide"}, "Makes everyone commit suicide, with an explosion.", function()
+menuAction(expFeats, EVERYONE_EXPLODE_SUICIDES_NAME, {"allsuicide"}, "Makes everyone commit suicide, with an explosion.", function()
     EveryoneExplodeSuicides()
 end)
 
-menu.divider(lobbyFeats, "Toxic Features")
+menu.divider(lobbyFeats, LOBBY_TOXIC_FEATURES_DIVIDER)
 
 -----------------------------------------------------------------------------------------------------------------
 
-Pizzaall = menuAction(lobbyFeats, "Black Plague Crash All", {"plagueall"}, "Blocked by most menus.", function ()
-    menu.show_warning(Pizzaall, 1, "This will crash everyone with the plague. Did you mean to click this?", PizzaCAll)
+Pizzaall = menuAction(lobbyFeats, BLACK_PLAGUE_CRASH_ALL_NAME, {"plagueall"}, "Blocked by most menus.", function ()
+    menu.show_warning(Pizzaall, 1, BLACK_PLAGUE_CRASH_ALL_WARNING_NAME, PizzaCAll)
 end)
 
-local lobbyremove = menu.list(lobbyFeats, "Removes", {}, "")
+local lobbyremove = menu.list(lobbyFeats, LOBBY_REMOVES_NAME, {}, "")
 
-menuAction(lobbyremove, "Freemode death all.", {"allfdeath"}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
+menuAction(lobbyremove, FREEMODE_DEATH_ALL_NAME, {"allfdeath"}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
     FreemodeDeathAll()
 end)
 
 TXC_SLOW = false
 
-menuAction(lobbyremove, "AIO Kick All.", {"allaiokick", "allaiok"}, "Will probably not work on some menus.", function ()
+menuAction(lobbyremove, AIO_KICK_ALL_NAME, {"allaiokick", "allaiok"}, "Will probably not work on some menus.", function ()
     AIOKickAll()
 end)
 
-menuToggle(lobbyremove, "Slower, but better AIO.", {}, "", function (on)
+menuToggle(lobbyremove, SLOWER_BUT_BETTER_AIO_NAME, {}, "", function (on)
     TXC_SLOW = on
     if SE_Notifications then
         util.toast("Better AIO set to " .. tostring(on))
@@ -116,26 +121,26 @@ end)
 
 ----------------------------------------------------------------------------
 
-local otherFeats = menu.list(lobbyFeats, "Other Features / Tools", {}, "")
+local otherFeats = menu.list(lobbyFeats, OTHER_FEATURES_NAME, {}, "")
 VehTeleportLoadIterations = 20
 
-menuAction(otherFeats, "Remove Vehicle Godmode for All (BETA)", {"allremovevehgod"}, "Removes everyone's vehicle godmode, making them easier to kill :)", function ()
+menuAction(otherFeats, REMOVE_VEHICLE_GODMODE_FOR_ALL_NAME, {"allremovevehgod"}, "Removes everyone's vehicle godmode, making them easier to kill :)", function ()
     RemoveVehicleGodmodeForAll()
 end)
 
-menuAction(otherFeats, "Teleport everyone's vehicles to ocean (BETA)", {"alltpvehocean"}, "Teleports everyone's vehicles into the ocean.", function()
+menuAction(otherFeats, TELEPORT_EVERYONES_VEHICLE_TO_OCEAN_NAME, {"alltpvehocean"}, "Teleports everyone's vehicles into the ocean.", function()
     TeleportEveryonesVehicleToOcean()
 end)
 
-menuAction(otherFeats, "Teleport everyone's vehicles to Maze Bank (BETA)", {"alltpvehmazebank"}, "Teleports everyone's vehicles on top of the Maze Bank tower.", function()
+menuAction(otherFeats, TELEPORT_EVERYONES_VEHICLE_TO_MAZE_BANK_NAME, {"alltpvehmazebank"}, "Teleports everyone's vehicles on top of the Maze Bank tower.", function()
     TeleportEveryonesVehicleToMazeBank()
 end)
 
-menu.slider(otherFeats, "Vehicle Teleporting Load Iterations", {"vehloaditerations"}, "How many times we teleport to the selected person to load their vehicle in. Keep in mind that every iteration is one-tenth of a second. Default is 20, or 2 seconds.", 1, 100, 20, 1, function(value)
+menu.slider(otherFeats, VEHICLE_TELEPORTING_LOAD_ITERATIONS, {"vehloaditerations"}, "How many times we teleport to the selected person to load their vehicle in. Keep in mind that every iteration is one-tenth of a second. Default is 20, or 2 seconds.", 1, 100, 20, 1, function(value)
     VehTeleportLoadIterations = value
 end)
 
-menuAction(otherFeats, "Check entire lobby for godmode", {}, "Checks the entire lobby for godmode, and notifies you of their names.", function()
+menuAction(otherFeats, CHECK_ENTIRE_LOBBY_FOR_GODMODE, {}, "Checks the entire lobby for godmode, and notifies you of their names.", function()
     CheckLobbyForGodmode()
 end)
 
@@ -143,8 +148,8 @@ end)
 
 --preload
 
-local mFunFeats = menu.list(menuroot, "Weapon Features", {"wpfeats"}, "")
-menu.divider(mFunFeats, "Sticky Bomb Gun")
+local mFunFeats = menu.list(menuroot, WEAPON_FEATURES_NAME, {"wpfeats"}, "")
+menu.divider(mFunFeats, STICKY_BOMB_GUN_DIVIDER)
 
 SE_stickyEntities = {}
 SE_stickyCount = 1
@@ -154,7 +159,7 @@ SE_stickyvec3count = 1
 ----
 ARAY_StickyBombGun = false --ArrayList setup
 ----
-menuToggleLoop(mFunFeats, "Improved Sticky Bomb Gun", {"sbgun"}, "Notes where or what you shot, to explode it later.", function ()
+menuToggleLoop(mFunFeats, IMPROVED_STICKY_BOMB_GUN_NAME, {"sbgun"}, "Notes where or what you shot, to explode it later.", function ()
     --[[
     if SE_ArrayList then
         ARAY_StickyBombGun = true
@@ -195,7 +200,7 @@ menuToggleLoop(mFunFeats, "Improved Sticky Bomb Gun", {"sbgun"}, "Notes where or
     ]]
 end)
 
-menuAction(mFunFeats, "Explode All Stickybombs", {"expsb"}, "Explodes all marked entities and coordinate with one stickybomb.", function ()
+menuAction(mFunFeats, EXPLODE_ALL_STICKYBOMBS_NAME, {"expsb"}, "Explodes all marked entities and coordinate with one stickybomb.", function ()
     for i = 1, #SE_stickyEntities do
         local targetC = getEntityCoords(SE_stickyEntities[i])
         SE_add_owned_explosion(GetLocalPed(), targetC.x, targetC.y, targetC.z, 2, 10, SEisExploAudible, SEisExploInvis, 0)
@@ -209,7 +214,7 @@ menuAction(mFunFeats, "Explode All Stickybombs", {"expsb"}, "Explodes all marked
     end
 end)
 
-menuAction(mFunFeats, "Clear Stickybombs", {"clearsb"}, "Clears all stickybombs from this script.", function ()
+menuAction(mFunFeats, CLEAR_STICKYBOMBS_NAME, {"clearsb"}, "Clears all stickybombs from this script.", function ()
     if SE_Notifications then
         util.toast("Stickybombs deleted!")
     end
@@ -221,7 +226,7 @@ end)
 
 
 ----
-menu.divider(mFunFeats, "Extinciton Gun")
+menu.divider(mFunFeats, EXTINCTION_GUN_DIVIDER)
 ----
 
 
@@ -230,7 +235,7 @@ MarkedForExtCount = 1
 ----
 ARAY_ExtinctionGun = false --ArrayList setup
 ----
-menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
+menuToggleLoop(mFunFeats, BETTER_EXTINCTION_GUN_NAME, {}, "", function ()
     local localPed = GetLocalPed()
     if PED.IS_PED_SHOOTING(localPed) then
         local point = memory.alloc(4)
@@ -267,7 +272,7 @@ menuToggleLoop(mFunFeats, "Better Extinction Gun", {}, "", function ()
     end
 end)
 
-menuAction(mFunFeats, "Extinct.", {}, "", function ()
+menuAction(mFunFeats, EXTINCT_NAME, {}, "", function ()
     for i = 1, #MarkedForExt, 1 do
         entities.delete_by_handle(MarkedForExt[i])
     end
@@ -278,7 +283,7 @@ menuAction(mFunFeats, "Extinct.", {}, "", function ()
         util.toast("Deleted! Clearing extinction list...")
     end
 end)
-menuAction(mFunFeats, "Clear Extinct List", {}, "", function ()
+menuAction(mFunFeats, CLEAR_EXTINCT_LIST_NAME, {}, "", function ()
     MarkedForExt = {}
     MarkedForExtCount = 1
 end)
@@ -286,12 +291,12 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(mFunFeats, "Proximity Mine Gun")
+menu.divider(mFunFeats, PROXIMITY_MINE_GUN_DIVIDER)
 
 PROX_Coords = {}
 PROX_Count = 1
 
-menuToggleLoop(mFunFeats, "Proximity Mine Gun", {"proxgun"}, "Only works on coordinates, not entities. For that, use sticky bomb gun.", function ()
+menuToggleLoop(mFunFeats, PROXIMITY_MINE_GUN_NAME, {"proxgun"}, "Only works on coordinates, not entities. For that, use sticky bomb gun.", function ()
     local localped = GetLocalPed()
     if PED.IS_PED_SHOOTING(localped) then --check if we shooting
         local pointer = memory.alloc() --allocate memory for coords
@@ -310,7 +315,7 @@ end)
 
 
 
-menuToggleLoop(mFunFeats, "Enable/Disable Proximity Mines", {"enableprox", "proxon"}, "Makes the proximity mines actually check for if entities are by them.", function ()
+menuToggleLoop(mFunFeats, ENABLE_DISABLE_PROXIMITY_MINES_NAME, {"enableprox", "proxon"}, "Makes the proximity mines actually check for if entities are by them.", function ()
     if PROX_Coords ~= nil then
         for i = 1, #PROX_Coords do
             local pedTable = entities.get_all_peds_as_handles()
@@ -323,14 +328,14 @@ menuToggleLoop(mFunFeats, "Enable/Disable Proximity Mines", {"enableprox", "prox
     end
 end)
 
-menuAction(mFunFeats, "Clear Proximity Mines", {"clearprox"}, "Clears all proximity mines that you've placed.", function ()
+menuAction(mFunFeats, CLEAR_PROXIMITY_MINES_NAME, {"clearprox"}, "Clears all proximity mines that you've placed.", function ()
     util.toast("Cleared all " .. #PROX_Coords .. " proximity mines!")
     PROX_Coords = {}
     PROX_Count = 1
 end)
 
 ----------------------------------------------------------------------------------------------------
-menu.divider(mFunFeats, "Kill Aura")
+menu.divider(mFunFeats, KILLAURA_DIVIDER)
 
 --preload
 KA_Radius = 20
@@ -340,7 +345,7 @@ KA_Onlyplayers = false
 KA_Delvehs = false
 KA_Delpeds = false
 
-menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally players, optionally friends, in a raidus.", function ()
+menuToggleLoop(mFunFeats, KILLAURA_NAME, {"killaura"}, "Kills peds, optionally players, optionally friends, in a raidus.", function ()
     local tKCount = 1
     local toKill = {}
     local ourcoords = getEntityCoords(GetLocalPed())
@@ -404,18 +409,18 @@ menuToggleLoop(mFunFeats, "KillAura", {"killaura"}, "Kills peds, optionally play
     wait(100)
 end)
 
-local killAuraSettings = menu.list(mFunFeats, "KillAura Settings", {}, "Settings for the KillAura functionality.")
-menu.divider(killAuraSettings, "KillAura Settings")
+local killAuraSettings = menu.list(mFunFeats, KILLAURA_SETTINGS_NAME, {}, "Settings for the KillAura functionality.")
+menu.divider(killAuraSettings, KILLAURA_SETTINGS_DIVIDER)
 
-menu.slider(killAuraSettings, "KillAura Radius", {"karadius"}, "Radius for killaura.", 1, 100, 20, 1, function (value)
+menu.slider(killAuraSettings, KILLAURA_RADIUS_NAME, {"karadius"}, "Radius for killaura.", 1, 100, 20, 1, function (value)
     KA_Radius = value
 end)
 
-menuToggle(killAuraSettings, "Blame Killaura on Me?", {"kablame"}, "If toggled off, bullets will not be blamed on you.", function (toggle)
+menuToggle(killAuraSettings, BLAME_KILLAURA_ON_ME_NAME, {"kablame"}, "If toggled off, bullets will not be blamed on you.", function (toggle)
     KA_Blame = toggle
 end, true)
 
-menuToggle(killAuraSettings, "Target Players?", {"kaplayers"}, "If toggled off, will only target peds.", function (toggle)
+menuToggle(killAuraSettings, TARGET_PLAYERS_NAME, {"kaplayers"}, "If toggled off, will only target peds.", function (toggle)
     KA_Players = toggle
     if toggle then
         if KA_Onlyplayers then
@@ -424,7 +429,7 @@ menuToggle(killAuraSettings, "Target Players?", {"kaplayers"}, "If toggled off, 
     end
 end)
 
-menuToggle(killAuraSettings, "Target ONLY Players?", {"kaonlyplayers"}, "If toggled on, will target ONLY players.", function (toggle)
+menuToggle(killAuraSettings, TARGET_ONLY_PLAYERS_NAME, {"kaonlyplayers"}, "If toggled on, will target ONLY players.", function (toggle)
     KA_Onlyplayers = toggle
     if toggle then
         if KA_Players then
@@ -433,20 +438,20 @@ menuToggle(killAuraSettings, "Target ONLY Players?", {"kaonlyplayers"}, "If togg
     end
 end)
 
-menuToggle(killAuraSettings, "Delete vehicles of peds?", {"kadelvehs"}, "If toggled on, will delete vehicles of non-player peds, which makes them easier to kill.", function (toggle)
+menuToggle(killAuraSettings, DELETE_VEHICLES_OF_PEDS_NAME, {"kadelvehs"}, "If toggled on, will delete vehicles of non-player peds, which makes them easier to kill.", function (toggle)
     KA_Delvehs = toggle
 end)
 
-menuToggle(killAuraSettings, "Delete peds after shooting?", {"kasilent"}, "If toggled on, will delete the peds that you have killed.", function (toggle)
+menuToggle(killAuraSettings, DELETE_PEDS_AFTER_SHOOTING_NAME, {"kasilent"}, "If toggled on, will delete the peds that you have killed.", function (toggle)
     KA_Delpeds = toggle
 end)
 
-menuToggleLoop(killAuraSettings, "Draw Radius of Killaura?", {"kasphere"}, "Draws a sphere that shows your killaura range.", function ()
+menuToggleLoop(killAuraSettings, DRAW_RADIUS_OF_KILLAURA_NAME, {"kasphere"}, "Draws a sphere that shows your killaura range.", function ()
     local myC = getEntityCoords(GetLocalPed())
     GRAPHICS._DRAW_SPHERE(myC.x, myC.y, myC.z, KA_Radius, 255, 0, 0, 0.3)
 end)
 
-menuToggleLoop(killAuraSettings, "Draw peds in radius", {"kadrawpeds"}, "If toggled on, will draw the number of peds in the selected radius. Does not need KillAura to be enabled.", function ()
+menuToggleLoop(killAuraSettings, DRAW_PEDS_IN_RADIUS_NAME, {"kadrawpeds"}, "If toggled on, will draw the number of peds in the selected radius. Does not need KillAura to be enabled.", function ()
     local dcount = 1
     local dtable = {}
     local ourcoords = getEntityCoords(GetLocalPed())
@@ -464,7 +469,7 @@ menuToggleLoop(killAuraSettings, "Draw peds in radius", {"kadrawpeds"}, "If togg
     directx.draw_text(0.0, 0.11, "Peds in radius of >> " .. KA_Radius .. " << " .. #dtable, ALIGN_TOP_LEFT, 0.5, cc, false)
 end)
 
-menuAction(killAuraSettings, "Spawn test peds", {}, "", function ()
+menuAction(killAuraSettings, SPAWN_TEST_PEDS_NAME, {}, "", function ()
     local hash = joaat("G_M_M_ChiGoon_02")
     local coords = getEntityCoords(GetLocalPed())
     requestModel(hash)
@@ -473,14 +478,14 @@ menuAction(killAuraSettings, "Spawn test peds", {}, "", function ()
     noNeedModel(hash)
 end)
 
-menuAction(killAuraSettings, "Populate the map.", {}, "After killing a bit too many peds, you can re-populate the map with this neat button. How cool!", function ()
+menuAction(killAuraSettings, POPULATE_THE_MAP_NAME, {}, "After killing a bit too many peds, you can re-populate the map with this neat button. How cool!", function ()
     MISC.POPULATE_NOW()
 end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(mFunFeats, "PvP / PvE Helper")
-local pvphelp = menu.list(mFunFeats, "PvP / PvE Helper", {"pvphelp"}, "")
+menu.divider(mFunFeats, PVP_PVE_HELPER_DIVIDER)
+local pvphelp = menu.list(mFunFeats, PVP_PVE_HELPER_NAME, {"pvphelp"}, "")
 
 --preload
 AIM_Spine2 = false
@@ -502,9 +507,9 @@ AIM_NPCS = false
 AIM_LEGITSILENT = true
 AIM_HEADVEH = false
 
-menu.divider(pvphelp, "Silent Aimbot")
+menu.divider(pvphelp, SILENT_AIMBOT_DIVIDER)
 
-menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
+menuToggleLoop(pvphelp, SILENT_AIMBOT_NAME, {"silentaim", "saimbot"}, "A silent aimbot with bone selection.", function ()
     local ourped = GetLocalPed()
     if PED.IS_PED_SHOOTING(ourped) then
         local ourc = getEntityCoords(ourped)
@@ -610,55 +615,55 @@ menuToggleLoop(pvphelp, "Silent Aimbot", {"silentaim", "saimbot"}, "A silent aim
     end
 end)
 
-local silentAimSettings = menu.list(pvphelp, "Silent Aim Settings", {}, "")
+local silentAimSettings = menu.list(pvphelp, SILENT_AIMBOT_SETTINGS_NAME, {}, "")
 
-menu.slider(silentAimSettings, "Silent Aimbot Damage", {"silentaimdamage", "silentdamage", "saimdamage"}, "The amount of damage Silent Aimbot does. Not accurate, sadly...", 1, 10000, 30, 10, function(value)
+menu.slider(silentAimSettings, SILENT_AIMBOT_DAMAGE_NAME, {"silentaimdamage", "silentdamage", "saimdamage"}, "The amount of damage Silent Aimbot does. Not accurate, sadly...", 1, 10000, 30, 10, function(value)
     AIM_DMG = value
 end)
 
-menu.slider(silentAimSettings, "Silent Aimbot Range", {"silentaimrange", "silentrange", "saimrange"}, "Silent Aimbot Range", 1, 10000, 300, 1, function (value)
+menu.slider(silentAimSettings, SILENT_AIMBOT_RANGE_NAME, {"silentaimrange", "silentrange", "saimrange"}, "Silent Aimbot Range", 1, 10000, 300, 1, function (value)
     AIM_Dist = value
 end)
 
-menu.slider(silentAimSettings, "Silent Aimbot FOV", {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
+menu.slider(silentAimSettings, SILENT_AIMBOT_FOV_NAME, {"silentaimfov", "silentfov", "saimfov"}, "The FOV of which players can be targeted. (divided by 10)", 1, 2700, 1, 10, function (value)
     AIM_FOV = value / 10
 end)
 
-menuToggle(silentAimSettings, "Vehicle Mode", {"silentaimvehicle", "silentvehice", "saveh"}, "Removes line-of-sight checks. Done to make silent aim work for vehicles. Please do note that the FOV is taken FROM THE VEHICLE, NOT FROM WHERE YOU ARE FACING.", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_VEHICLE_MODE_NAME, {"silentaimvehicle", "silentvehice", "saveh"}, "Removes line-of-sight checks. Done to make silent aim work for vehicles. Please do note that the FOV is taken FROM THE VEHICLE, NOT FROM WHERE YOU ARE FACING.", function (on)
     LOS_CHECK = not on
 end)
 
-menuToggle(silentAimSettings, "Legit Silent Aim", {"silentlegit"}, "If you have Line-of-Sight, attempts to shoot a bullet from you to the player. Doesn't always work if they're moving too fast.", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_LEGIT_SILENT_AIM_NAME, {"silentlegit"}, "If you have Line-of-Sight, attempts to shoot a bullet from you to the player. Doesn't always work if they're moving too fast.", function (on)
     AIM_LEGITSILENT = on
 end, true)
 
-menuToggle(silentAimSettings, "Vehicle-Head Check", {"silentcheckveh"}, "Will check if the selected player is in a vehicle. If they are in a vehicle, and HEAD isn't selected, will target their head automatically to increase chances of killing.", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_VEHICLE_HEAD_CHECK_NAME, {"silentcheckveh"}, "Will check if the selected player is in a vehicle. If they are in a vehicle, and HEAD isn't selected, will target their head automatically to increase chances of killing.", function (on)
     AIM_HEADVEH = on
 end)
 
-menuToggle(silentAimSettings, "Target ONLY NPCs", {"silentnpc"}, "Toggle this to ONLY silent aimbot NPCs. Toggle off for ONLY players.", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_TARGET_ONLY_NPCS_NAME, {"silentnpc"}, "Toggle this to ONLY silent aimbot NPCs. Toggle off for ONLY players.", function (on)
     AIM_NPCS = on
 end)
 
 menu.divider(silentAimSettings, "-----------------")
 
-menuToggle(silentAimSettings, "Silent Aimbot Head", {"silentaimhead", "silenthead", "saimhead"}, "Makes the aimbot target the head. Probably doesn't look legitimate, but ok.", function(on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_HEAD_NAME, {"silentaimhead", "silenthead", "saimhead"}, "Makes the aimbot target the head. Probably doesn't look legitimate, but ok.", function(on)
     AIM_Head = on
 end)
 
-menuToggle(silentAimSettings, "Silent Aimbot Body (Spine2)", {"silentaimspine2", "silentspine2", "saimspine2"}, "Makes the aimbot target the body, also known as spine2.", function(on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_BODY_NAME, {"silentaimspine2", "silentspine2", "saimspine2"}, "Makes the aimbot target the body, also known as spine2.", function(on)
     AIM_Spine2 = on
 end)
 
-menuToggle(silentAimSettings, "Silent Aimbot Pelvis", {"silentaimpelvis", "silentpelvis", "saimpelvis"}, "Makes the aimbot target the pelvis.", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_PELVIS_NAME, {"silentaimpelvis", "silentpelvis", "saimpelvis"}, "Makes the aimbot target the pelvis.", function (on)
     AIM_Pelvis = on
 end)
 
-menuToggle(silentAimSettings, "Silent Aimbot Toe (Toe0)", {"silentaimtoe", "silenttoe", "saimtoe"}, "Makes the aimbot target the toe, otherwise known as toe0", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_TOE_NAME, {"silentaimtoe", "silenttoe", "saimtoe"}, "Makes the aimbot target the toe, otherwise known as toe0", function (on)
     AIM_Toe0 = on
 end)
 
-menuToggle(silentAimSettings, "Silent Aimbot Hand (R_HAND)", {"silentaimhand", "silenthand", "saimhand"}, "Makes the aimbot target the hand, otherwise known as R_Hand", function (on)
+menuToggle(silentAimSettings, SILENT_AIMBOT_HAND_NAME, {"silentaimhand", "silenthand", "saimhand"}, "Makes the aimbot target the hand, otherwise known as R_Hand", function (on)
     AIM_RHand = on
 end)
 
@@ -673,12 +678,12 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(pvphelp, "Vehicle Aimbot (experimental)")
+menu.divider(pvphelp, VEHICLE_AIMBOT_DIVIDER)
 --TYSM NOWIRY AND AARON!
 
 VEH_MISSILE_SPEED = 10000
 
-menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
+menuToggleLoop(pvphelp, HELICOPTER_AIMBOT_NAME, {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
     local p = GetClosestPlayerWithRange_Whitelist(200)
     local localped = GetLocalPed()
     local localCoords = getEntityCoords(localped)
@@ -695,7 +700,7 @@ menuToggleLoop(pvphelp, "Helicopter Aimbot", {}, "Makes the heli aim at the clos
     end
 end)
 
-menuAction(pvphelp, "Modify Missile Speed", {}, "Thank you so much Nowiry for this.", function ()
+menuAction(pvphelp, MODIFY_MISSILE_SPEED_NAME, {}, "Thank you so much Nowiry for this.", function ()
     local localped = GetLocalPed()
     if PED.IS_PED_IN_ANY_VEHICLE(localped) then
         local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
@@ -705,13 +710,13 @@ menuAction(pvphelp, "Modify Missile Speed", {}, "Thank you so much Nowiry for th
     end
 end)
 
-menu.slider(pvphelp, "Set missile speed", {"vehmissilespeed"}, "Sets the speed of your missiles.", 1, 2147483647, 10000, 100, function (value)
+menu.slider(pvphelp, SET_MISSILE_SPEED_NAME, {"vehmissilespeed"}, "Sets the speed of your missiles.", 1, 2147483647, 10000, 100, function (value)
     VEH_MISSILE_SPEED = value
 end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(pvphelp, "RPG Aimbot")
+menu.divider(pvphelp, RPG_AIMBOT_DIVIDER)
 
 MISL_AIM = false
 MISL_RAD = 300
@@ -733,7 +738,7 @@ end
 
 --https://github.com/Sainan/gta-v-joaat-hash-db/blob/senpai/out/objects-hex.csv
 
-menu.toggle(pvphelp, "RPG Aimbot / Most Vehicles", {"rpgaim"}, "You heard me. Only the REGULAR RPG, not the homing one. Works on vehicles as well, such as Lazer or Buzzard. No guarantees, though!", function (on)
+menu.toggle(pvphelp, RPG_AIMBOT_MOST_VEHICLES_NAME, {"rpgaim"}, "You heard me. Only the REGULAR RPG, not the homing one. Works on vehicles as well, such as Lazer or Buzzard. No guarantees, though!", function (on)
     if on then
         MISL_AIM = true
         local rockethash = util.joaat("w_lr_rpg_rocket")
@@ -877,9 +882,61 @@ end)
 
 MISL_AIR = false
 
-local rpgsettings = menu.list(pvphelp, "RPG Aimbot Settings", {"rpgsettings"}, "")
+menu.toggle(pvphelp, "Oppressor Aimbot", {"oppressoraim"}, "Why.. why tf would you do this", function (on)
+    if on then
+        MISL_AIM = true
+        local rockethash = util.joaat("w_ex_vehiclemissile_3")
+        util.create_thread(function()
+            while MISL_AIM do
+                local localped = GetLocalPed()
+                local localcoords = getEntityCoords(GetLocalPed())
+                --if RRocket ~= 0 then
+                    RRocket = OBJECT.GET_CLOSEST_OBJECT_OF_TYPE(localcoords.x, localcoords.y, localcoords.z, 10, rockethash, false, true, true, true)
+                --else
+                  --  util.toast("rocket exists")
+                --end
+                local p = GetClosestPlayerWithRange_Whitelist(MISL_RAD)
+                ----
+                if (RRocket ~= 0) and (p ~= nil) and (not PED.IS_PED_DEAD_OR_DYING(p)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)]) and (PED.IS_PED_SHOOTING(localped)) and (getEntityCoords(p).z > 0) then
+                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and MISL_LOS) or not MISL_LOS then
+                        if SE_Notifications then
+                            util.toast("Precusors done!")
+                        end
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(RRocket) then
+                            for i = 1, 10 do
+                                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                            end
+                        else
+                            if SE_Notifications then
+                                util.toast("has control")
+                            end
+                        end
+                        while ENTITY.DOES_ENTITY_EXIST(RRocket) do
+                            if SE_Notifications then
+                                util.toast("rocket exists")
+                            end
+                            local pcoords = PED.GET_PED_BONE_COORDS(p, 20781, 0, 0, 0)
+                            local lc = getEntityCoords(RRocket)
+                            local look = util.v3_look_at(lc, pcoords)
+                            local dir = util.rot_to_dir(look)
+                            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
+                            wait()
+                        end
+                        --do code here, all precursors done.
+                    end
+                end
+                wait()
+            end
+        end)
+    else
+        MISL_AIM = false
+    end
+end)
 
-menu.toggle(rpgsettings, "Enable Javelin Mode", {"rpgjavelin"}, "Makes the rocket go very up high and kill the closest player to you :) | Advised: Combine 'RPG LOS Remove' for you to fire at targets that you do not see.", function (on)
+local rpgsettings = menu.list(pvphelp, RPG_AIMBOT_SETTINGS_NAME, {"rpgsettings"}, "")
+
+menu.toggle(rpgsettings, RPG_AIMBOT_ENABLE_JAVELIN_MODE_NAME, {"rpgjavelin"}, "Makes the rocket go very up high and kill the closest player to you :) | Advised: Combine 'RPG LOS Remove' for you to fire at targets that you do not see.", function (on)
     if on then
         MISL_AIR = true
     else
