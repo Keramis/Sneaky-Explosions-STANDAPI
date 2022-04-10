@@ -882,58 +882,6 @@ end)
 
 MISL_AIR = false
 
-menu.toggle(pvphelp, "Oppressor Aimbot", {"oppressoraim"}, "Why.. why tf would you do this", function (on)
-    if on then
-        MISL_AIM = true
-        local rockethash = util.joaat("w_ex_vehiclemissile_3")
-        util.create_thread(function()
-            while MISL_AIM do
-                local localped = GetLocalPed()
-                local localcoords = getEntityCoords(GetLocalPed())
-                --if RRocket ~= 0 then
-                    RRocket = OBJECT.GET_CLOSEST_OBJECT_OF_TYPE(localcoords.x, localcoords.y, localcoords.z, 10, rockethash, false, true, true, true)
-                --else
-                  --  util.toast("rocket exists")
-                --end
-                local p = GetClosestPlayerWithRange_Whitelist(MISL_RAD)
-                ----
-                if (RRocket ~= 0) and (p ~= nil) and (not PED.IS_PED_DEAD_OR_DYING(p)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)]) and (PED.IS_PED_SHOOTING(localped)) and (getEntityCoords(p).z > 0) then
-                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and MISL_LOS) or not MISL_LOS then
-                        if SE_Notifications then
-                            util.toast("Precusors done!")
-                        end
-                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
-                        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(RRocket) then
-                            for i = 1, 10 do
-                                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
-                            end
-                        else
-                            if SE_Notifications then
-                                util.toast("has control")
-                            end
-                        end
-                        while ENTITY.DOES_ENTITY_EXIST(RRocket) do
-                            if SE_Notifications then
-                                util.toast("rocket exists")
-                            end
-                            local pcoords = PED.GET_PED_BONE_COORDS(p, 20781, 0, 0, 0)
-                            local lc = getEntityCoords(RRocket)
-                            local look = util.v3_look_at(lc, pcoords)
-                            local dir = util.rot_to_dir(look)
-                            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
-                            wait()
-                        end
-                        --do code here, all precursors done.
-                    end
-                end
-                wait()
-            end
-        end)
-    else
-        MISL_AIM = false
-    end
-end)
-
 local rpgsettings = menu.list(pvphelp, RPG_AIMBOT_SETTINGS_NAME, {"rpgsettings"}, "")
 
 menu.toggle(rpgsettings, RPG_AIMBOT_ENABLE_JAVELIN_MODE_NAME, {"rpgjavelin"}, "Makes the rocket go very up high and kill the closest player to you :) | Advised: Combine 'RPG LOS Remove' for you to fire at targets that you do not see.", function (on)
@@ -944,15 +892,15 @@ menu.toggle(rpgsettings, RPG_AIMBOT_ENABLE_JAVELIN_MODE_NAME, {"rpgjavelin"}, "M
     end
 end)
 
-menu.slider(rpgsettings, "RPG Aimbot Radius", {"msl_frc_rad"}, "Range for missile aimbot, e.g. how far the person can be away.", 1, 10000, 300, 10, function (value)
+menu.slider(rpgsettings, RPG_AIMBOT_RADIUS_NAME, {"msl_frc_rad"}, "Range for missile aimbot, e.g. how far the person can be away.", 1, 10000, 300, 10, function (value)
     MISL_RAD = value
 end)
 
-menu.slider(rpgsettings, "RPG Speed Multiplier", {"msl_spd_mult"}, "Multiplier for speed. Default is 100, it's good.", 1, 10000, 100, 100, function (value)
+menu.slider(rpgsettings, RPG_AIMBOT_SPEED_MULTIPLIER_NAME, {"msl_spd_mult"}, "Multiplier for speed. Default is 100, it's good.", 1, 10000, 100, 100, function (value)
     MISL_SPD = value
 end)
 
-menuToggle(rpgsettings, "RPG LOS Remove", {}, "Removes line-of-sight checks. Do not turn this on unless you know what you're doing.", function (on)
+menuToggle(rpgsettings, RPG_AIMBOT_LOS_REMOVE_NAME, {}, "Removes line-of-sight checks. Do not turn this on unless you know what you're doing.", function (on)
     if on then
         MISL_LOS = false
     else
@@ -960,7 +908,7 @@ menuToggle(rpgsettings, "RPG LOS Remove", {}, "Removes line-of-sight checks. Do 
     end
 end)
 
-menuToggle(rpgsettings, "RPG Dashcam™", {"rpgcamera"}, "Now with a dashcam, you can finally find out where the fuck your rocket goes if you're using javelin mode.", function (on)
+menuToggle(rpgsettings, RPG_AIMBOT_DASHCAM_NAME, {"rpgcamera"}, "Now with a dashcam, you can finally find out where the fuck your rocket goes if you're using javelin mode.", function (on)
     if on then
         MISL_CAM = true
     else
@@ -970,12 +918,12 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(pvphelp, "Orbital Waypoint")
+menu.divider(pvphelp, ORBITAL_WAYPINT_DIVIDER)
 
 --preload
 ORB_Sneaky = false
 
-menuAction(pvphelp, "Orbital Strike Waypoint", {"orbway", "orbwp"}, "Orbital Cannons your selected Waypoint.", function ()
+menuAction(pvphelp, ORBITAL_STRIKE_WAYPOINT_NAME, {"orbway", "orbwp"}, "Orbital Cannons your selected Waypoint.", function ()
     local wpos = Get_Waypoint_Pos2()
     if SE_Notifications then
         util.toast("Selected Waypoint Coordinates: " .. wpos.x .. " " .. wpos.y .. " " .. wpos.z)
@@ -995,7 +943,7 @@ menuAction(pvphelp, "Orbital Strike Waypoint", {"orbway", "orbwp"}, "Orbital Can
     end
 end)
 
-menuToggle(pvphelp, "Sneaky Explosion", {}, "Makes the orbital not blamed on you.", function (on)
+menuToggle(pvphelp, ORBITAL_STRIKE_SNEAKY_EXPLOSION_NAME, {}, "Makes the orbital not blamed on you.", function (on)
     if on then
         ORB_Sneaky = true
     else
@@ -1005,13 +953,13 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(pvphelp, "Auto Car-Suicide")
+menu.divider(pvphelp, AUTO_CAR_SUICIDE_DIVIDER)
 
 --preload
 CAR_S_sneaky = false
 CAR_S_BLACKLIST = {}
 
-menuToggleLoop(pvphelp, "Auto Car-Suicide", {"carexplode"}, "Automatically explodes your car when you are next to a player.", function()
+menuToggleLoop(pvphelp, AUTO_CAR_SUICIDE_NAME, {"carexplode"}, "Automatically explodes your car when you are next to a player.", function()
     local ourped = GetLocalPed()
     if PED.IS_PED_IN_ANY_VEHICLE(ourped, false) then
         local pedTable = entities.get_all_peds_as_pointers()
@@ -1042,7 +990,7 @@ menuToggleLoop(pvphelp, "Auto Car-Suicide", {"carexplode"}, "Automatically explo
     end
 end)
 
-menuToggle(pvphelp, "Car Suicide Sneaky", {"carexplodesneaky"}, "Makes the explosion of the car bomb not blamed on you.", function(on)
+menuToggle(pvphelp, AUTO_CAR_SUICIDE_SNEAKY_NAME, {"carexplodesneaky"}, "Makes the explosion of the car bomb not blamed on you.", function(on)
     if on then
         CAR_S_sneaky = true
     else
@@ -1052,12 +1000,12 @@ end)
 
 ----------------------------------------------------------------------------------------------------
 
-menu.divider(pvphelp, "Legit Rapid Fire")
+menu.divider(pvphelp, LEGIT_RAPID_FIRE_DIVIDER)
 
 LegitRapidFire = false
 LegitRapidMS = 100
 
-menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quickly switches to grenades and back to your weapon after you shot something. Useful with Sniper, RPG, Grenade Launcher.", function(on)
+menuToggle(pvphelp, LEGIT_RAPID_FIRE_FAST_SWITCH_NAME, {"legitrapidfire"}, "Quickly switches to grenades and back to your weapon after you shot something. Useful with Sniper, RPG, Grenade Launcher.", function(on)
     local localped = GetLocalPed()
     if on then
         LegitRapidFire = true
@@ -1080,7 +1028,7 @@ menuToggle(pvphelp, "Legit Rapid Fire (fast-switch)", {"legitrapidfire"}, "Quick
     end
 end)
 
-menu.slider(pvphelp, "Legit Rapid Fire Delay (ms)", {"legitrapiddelay"}, "The delay that it takes to switch to grenade and back to the weapon.", 1, 1000, 100, 50, function (value)
+menu.slider(pvphelp, LEGIT_RAPID_FIRE_DELAY_MS_NAME, {"legitrapiddelay"}, "The delay that it takes to switch to grenade and back to the weapon.", 1, 1000, 100, 50, function (value)
     LegitRapidMS = value
 end)
 
@@ -1451,60 +1399,6 @@ menuAction(toolFeats, "Set every single thing that is a minute long to 0", {}, "
     memory.write_int(memory.script_global(262145+16403),0)
     wait(50) 
     memory.write_int(memory.script_global(262145+23818),0)
-    --[[
-    memory.write_int(memory.script_global(262145+30775),0)
-    memory.write_int(memory.script_global(262145+30813),0)
-    memory.write_int(memory.script_global(262145+31315),0)
-    memory.write_int(memory.script_global(262145+32109),0)
-    memory.write_int(memory.script_global(262145+16756),0)
-    memory.write_int(memory.script_global(262145+16935),0)
-    memory.write_int(memory.script_global(262145+17202),0)
-    memory.write_int(memory.script_global(262145+17206),0)
-    memory.write_int(memory.script_global(262145+17207),0)
-    memory.write_int(memory.script_global(262145+17211),0)
-    memory.write_int(memory.script_global(262145+17240),0)
-    memory.write_int(memory.script_global(262145+19291),0)
-    memory.write_int(memory.script_global(262145+21103),0)
-    memory.write_int(memory.script_global(262145+21103),0)
-    memory.write_int(memory.script_global(262145+21104),0)
-    memory.write_int(memory.script_global(262145+21129),0)
-    memory.write_int(memory.script_global(262145+22400),0)
-    memory.write_int(memory.script_global(262145+22404),0)
-    memory.write_int(memory.script_global(262145+22408),0)
-    memory.write_int(memory.script_global(262145+22524),0)
-    memory.write_int(memory.script_global(262145+22858),0)
-    memory.write_int(memory.script_global(262145+23213),0)
-    memory.write_int(memory.script_global(262145+23762),0)
-    memory.write_int(memory.script_global(262145+24100),0)
-    memory.write_int(memory.script_global(262145+24417),0)
-    memory.write_int(memory.script_global(262145+24544),0)
-    memory.write_int(memory.script_global(262145+25058),0)
-    memory.write_int(memory.script_global(262145+25065),0)
-    memory.write_int(memory.script_global(262145+25436),0)
-    memory.write_int(memory.script_global(262145+28058),0)
-    memory.write_int(memory.script_global(262145+28419),0)
-    memory.write_int(memory.script_global(262145+153),0)
-    memory.write_int(memory.script_global(262145+51),0)
-    memory.write_int(memory.script_global(262145+56),0)
-    memory.write_int(memory.script_global(262145+4667),0)
-    memory.write_int(memory.script_global(262145+4138),0)
-    memory.write_int(memory.script_global(262145+7435),0)
-    memory.write_int(memory.script_global(262145+8042),0)
-    memory.write_int(memory.script_global(262145+9877),0)
-    memory.write_int(memory.script_global(262145+10395),0)
-    memory.write_int(memory.script_global(262145+10610),0)
-    memory.write_int(memory.script_global(262145+10761),0)
-    memory.write_int(memory.script_global(262145+10863),0)
-    memory.write_int(memory.script_global(262145+11191),0)
-    memory.write_int(memory.script_global(262145+11333),0)
-    memory.write_int(memory.script_global(262145+11425),0)
-    memory.write_int(memory.script_global(262145+11808),0)
-    memory.write_int(memory.script_global(262145+11812),0)
-    memory.write_int(memory.script_global(262145+12805),0)
-    memory.write_int(memory.script_global(262145+15297),0)
-    memory.write_int(memory.script_global(262145+16403),0)
-    memory.write_int(memory.script_global(262145+23818),0)
-    ]]
 end)
 
 ----
@@ -1591,35 +1485,19 @@ menu.slider(yoinkSettings, "Range for Yoink", {"yoinkrange"}, "", 1, 5000, 500, 
 end)
 
 menuToggle(yoinkSettings, "Peds", {}, "", function (peds)
-    if peds then
-        YOINK_PEDS = true
-    else
-        YOINK_PEDS = false
-    end
+    YOINK_PEDS = peds
 end)
 
 menuToggle(yoinkSettings, "Vehicles", {}, "", function (vehs)
-    if vehs then
-        YOINK_VEHICLES = true
-    else
-        YOINK_VEHICLES = false
-    end
+    YOINK_VEHICLES = vehs
 end)
 
 menuToggle(yoinkSettings, "Objects", {}, "", function (objs)
-    if objs then
-        YOINK_OBJECTS = true
-    else
-        YOINK_OBJECTS = false
-    end
+    YOINK_OBJECTS = objs
 end)
 
 menuToggle(yoinkSettings, "Pickups", {}, "", function (pick)
-    if pick then
-        YOINK_PICKUPS = true
-    else
-        YOINK_PICKUPS = false
-    end
+    YOINK_PICKUPS = pick
 end)
 
 --------------------------------------------------------------------------------------------------------------------------
@@ -1892,27 +1770,6 @@ menuAction(spawnFeats, "Generate spawn features", {}, "Generates the spawn featu
     GenerateSpawnFeatures()
 end)
 
--- CoolFlareFly = false
--- menuToggle(vehicleFeats, "Cool Flare Fly", {"coolflarefly"}, "A really cool flight with flares. Get into a plane for this.", function (on)
---     if on then
---         CoolFlareFly = true
---         local flareHash = joaat("w_pi_flaregun_shell")
---         util.create_thread(function()
---             while CoolFlareFly do
---                 local localPed = GetLocalPed()
---                 if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
---                     local veh = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
---                 end
---                 ----
---                 wait()
---             end
---         end)
---     else
---         CoolFlareFly = false
---     end
--- end)
---------------------------------------------------------------------------------------------------------------------------
-
 menu.divider(menuroot, "----------Settings----------")
 
 menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
@@ -1931,25 +1788,6 @@ menuToggle(menuroot, "Enable/Disable ArrayList", {"arraylist"}, "God, please, sa
     end
 end)
 
---[[
-menuAction(debugFeats, "Get Vehicle and Do something", {}, "", function ()
-    local pped = getPlayerPed(players.user())
-    local ourveh = PED.GET_VEHICLE_PED_IS_IN(pped, false)
-    VEHICLE.ROLL_DOWN_WINDOWS(ourveh)
-end)]]
-
-
------------------------------------------------------------------------------------------------------------------------------------
-
---SET_CAM_ACTIVE : set cam as active
---IS_CAM_ACTIVE : is cam active?
---CREATE_CAM : create a cam
---SET_ENTITY_CAN_BE_DAMAGED : entity damaged?
---IS_PROJECTILE_IN_AREA : is a proj in area, can BOOL for only player-owned. (Maybe rocket deleter?) (with CLEAR_AREA_OF_PROJECTILES)
-
-
-
------------------------------------------------------------------------------------------------------------------------------------
 
 
 --preload explosion delay
@@ -2508,34 +2346,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
         end
     end)
 
-    -----------------------------------------------------------------------------------------------------------------------------------
-
-    --[[
-    menu.divider(playerOtherTrolling, "Less Toxic")
-    menuAction(playerOtherTrolling, "Give them a wanted star!", {"gwant"}, "Kills some peds to give the player 1 (sometimes 2) wanted star(s).", function ()
-        local hash = joaat("G_M_M_ChiGoon_02")
-        local ped = getPlayerPed(pid)
-        local c = getEntityCoords(ped)
-        local myped = GetLocalPed()
-        requestModel(hash)
-        while not hasModelLoaded(hash) do wait() end
-        local peds = {}
-        for i = 1, 5 do
-            peds[i] = PED.CREATE_PED(24, hash, c.x, c.y, c.z + 10, 0, true, false)
-            wait(10)
-        end
-        SE_add_owned_explosion(ped, c.x, c.y, c.z + 10, 2, 20, false, true, 0)
-        SE_add_owned_explosion(ped, c.x, c.y, c.z + 9, 2, 20, false, true, 0)
-        SE_add_owned_explosion(ped, c.x, c.y, c.z + 8, 2, 20, false, true, 0)
-        wait(3000)
-        for i = 1, #peds do
-            entities.delete_by_handle(peds[i])
-        end
-        noNeedModel(hash)
-    end)
-    ]]
-
-    -----------------------------------------------------------------------------------------------------------------------------------
 
     menu.divider(playerTools, "Move Check")
 
@@ -2669,16 +2479,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     end)
 
 end
-
---skidded from LanceScript, hope Lance won't mind ;)
---[[deprecated code, ty vsus for newer version
-for k,p in pairs(players.list(true, true, true)) do
-    playerActionsSetup(p)
-end
-players.on_join(function(pid)
-    playerActionsSetup(pid)
-end)
-]]
 
 players.on_join(playerActionsSetup)
 players.dispatch_on_join()
