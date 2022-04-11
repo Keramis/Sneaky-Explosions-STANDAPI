@@ -1034,134 +1034,29 @@ end)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 
-local debugFeats = menu.list(menuroot, "Debug Features", {}, "")
+local toolFeats = menu.list(menuroot, TOOL_FEATURES_NAME, {}, "")
 
-menuAction(debugFeats, "Get V3 Coords", {"printcoords"}, "Toasts your coordinates.", function()
-    local playerCoords = getEntityCoords(getPlayerPed(players.user()), true)
-    if SE_Notifications then
-        util.toast("X:" .. tostring(playerCoords['x']) .. " Y:".. tostring(playerCoords['y']) .. " Z:" ..tostring(playerCoords['z']))
-    end
+menu.divider(toolFeats, SMOOTH_TP_DIVIDER)
+
+FRAME_STP = false
+
+menuAction(toolFeats, SMOOTH_TELEPORT_NAME, {"stp"}, "Teleports you to your waypoint with the camera being smooth.", function ()
+    SmoothTeleportToCord(Get_Waypoint_Pos2(), FRAME_STP)
 end)
 
-menuToggleLoop(debugFeats, "Request Control?", {}, "", function ()
-    ::start::
-    local localPed = GetLocalPed()
-    if PED.IS_PED_SHOOTING(localPed) then
-        local contr = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), contr)
-        if isEntFound then
-            local ent = memory.read_int(contr)
-            local wascoord = getEntityCoords(ent)
-            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ent)
-            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(ent, 1000, 1000, 1000, true, true, true)
-            wait(100)
-            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(ent, wascoord.x, wascoord.y, wascoord.z, true, true, true)
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(ent) then
-                for i = 1, 20, 1 do
-                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ent)
-                    wait(100) 
-                end
-            end
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(ent) then util.toast("Waited 2 seconds, couldn't get control!") goto start end
-            util.toast("Has control!")
-        end
-        memory.free(contr)
-    end
+menuToggle(toolFeats, SMOOTH_TELEPORT_FRAME_NAME, {"stpv2"}, "Makes you or your vehicle teleport along with the camera for a 'smoother' teleport.", function(toggle)
+    FRAME_STP = toggle
 end)
 
-
-menuToggleLoop(debugFeats, "Get V3 Of Entity", {"entcoords"}, "Toasts the coodinates of the entity you shoot.", function ()
-    local pp = GetLocalPed()
-    if PED.IS_PED_SHOOTING(pp) then
-        local pointer = memory.alloc(4)
-        local found = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
-        if found then
-            local v3coords = getEntityCoords(memory.read_int(pointer))
-            util.toast(v3coords.x .. " " .. v3coords.y .. " " .. v3coords.z)
-        end
-        memory.free(pointer)
-    end
-end)
-
-menuAction(debugFeats, "Get Heading", {}, "", function ()
-    local pp = GetLocalPed()
-    util.toast(ENTITY.GET_ENTITY_HEADING(pp))
-end)
-
---[[menuAction(debugFeats, "BLOCK TESTING", {}, "", function ()
-    local hash = 309416120
-    requestModel(hash)
-    while not hasModelLoaded(hash) do wait() end
-
-    local a1 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1182, 2650, 37, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(a1, 88+180)
-
-    local b1 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1176, 2650, 37, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(b1, 88+180)
-
-    local c1 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1185, 2647, 37, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(c1, 182)
-
-    local d1 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1172, 2646, 37, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(d1, 2)
-
-    --
-
-    local a1_2 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1182, 2650, 39, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(a1_2, 88+180)
-
-    local b1_2 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1176, 2650, 39, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(b1_2, 88+180)
-
-    local c1_2 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1185, 2647, 39, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(c1_2, 182)
-
-    local d1_2 = OBJECT.CREATE_OBJECT_NO_OFFSET(hash, 1172, 2646, 39, true, true, true)
-    ENTITY.SET_ENTITY_HEADING(d1_2, 2)
-
-    noNeedModel(hash)
-end)]]
-
-menuToggleLoop(debugFeats, "Get player name from shot", {}, "", function ()
-    local pped = getPlayerPed(players.user())
-    if PED.IS_PED_SHOOTING(pped) then
-        local playerPointer = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), playerPointer)
-        if isEntFound then
-            util.toast("Entity found!")
-            local playerHandle = memory.read_int(playerPointer)
-            if ENTITY.IS_ENTITY_A_PED(playerHandle) then
-                util.toast("Is a ped!")
-                util.toast(tostring(playerHandle))
-                if PED.IS_PED_A_PLAYER(playerHandle) then
-                    util.toast("Is a player!")
-                    local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(playerHandle)
-                    util.toast(playerID .. " is their playerID!")
-                    local playerName = NETWORK.NETWORK_PLAYER_GET_NAME(playerID)
-                    util.toast(playerName .. " is their name!")
-                end
-            end
-        end
-    end
-end)
-
-local toolFeats = menu.list(menuroot, "Tools", {}, "")
-
-menu.divider(toolFeats, "Smooth TP")
-
-menuAction(toolFeats, "Smooth Teleport", {"stp"}, "Teleports you to your waypoint with the camera being smooth.", function ()
-    SmoothTeleportToCord(Get_Waypoint_Pos2())
-end)
-
-menuAction(toolFeats, "Reset Camera", {"resetstp"}, "Rendering of script cams to false, along with destroying the current cam. For if you teleport into the ocean, and the camera DIES.", function ()
+menuAction(toolFeats, SMOOTH_TELEPORT_RESET_CAMERA_NAME, {"resetstp"}, "Rendering of script cams to false, along with destroying the current cam. For if you teleport into the ocean, and the camera DIES.", function ()
     local renderingCam = CAM.GET_RENDERING_CAM()
     CAM.RENDER_SCRIPT_CAMS(false, false, 0, true, true, 0)
     CAM.DESTROY_CAM(renderingCam, true)
 end)
 
-local stpsettings = menu.list(toolFeats, "SmoothTP Settings", {}, "")
+local stpsettings = menu.list(toolFeats, SMOOTH_TP_SETTINGS_NAME, {}, "")
 
-menu.slider(stpsettings, "Speed Modifier (x) /10", {"stpspeed"}, "Speed Modifider for smooth-tp, multiplicative. This will divide by 10, as sliders cannot take non-integers", 1, 100, 10, 1, function(value)
+menu.slider(stpsettings, SMOOTH_TP_SPEED_MODIFIER_NAME, {"stpspeed"}, "Speed Modifider for smooth-tp, multiplicative. This will divide by 10, as sliders cannot take non-integers", 1, 100, 10, 1, function(value)
     local multiply = value / 10
     if SE_Notifications then
         util.toast("SmoothTP Speed Multiplier set to " .. tostring(multiply) .. "!")
@@ -1170,7 +1065,7 @@ menu.slider(stpsettings, "Speed Modifier (x) /10", {"stpspeed"}, "Speed Modifide
     STP_SPEED_MODIFIER = STP_SPEED_MODIFIER * multiply
 end)
 
-menu.slider(stpsettings, "Height of cam transition (meters)", {"stpheight"}, "Set the height for the camera when it's doing the transition.", 0, 10000, 300, 10, function (value)
+menu.slider(stpsettings, SMOOTH_TP_HEIGHT_OF_CAM_NAME, {"stpheight"}, "Set the height for the camera when it's doing the transition.", 0, 10000, 300, 10, function (value)
     local height = value
     if SE_Notifications then
         util.toast("SmoothTP Height set to " .. tostring(height) .. "!")
@@ -1181,10 +1076,6 @@ end)
 menu.divider(toolFeats, "-=-=-=-=-=-=-=-=-")
 
 --
-menuAction(toolFeats, "Teleport high up", {"tphigh"}, "Teleports you very high up, for testing parachutes/falldamage.", function ()
-    local pcoords = getEntityCoords(GetLocalPed())
-    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pcoords.x, pcoords.y, pcoords.z + 1000, false, false, false)
-end)
 
 --preload
 DR_TXT_SCALE = 0.5
