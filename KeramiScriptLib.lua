@@ -59,7 +59,7 @@ end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- CAM FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
-function SmoothTeleportToCord(v3coords)
+function SmoothTeleportToCord(v3coords, teleportFrame)
     local wppos = v3coords
     local localped = getPlayerPed(players.user())
     if wppos ~= nil then --cam setup here
@@ -68,6 +68,22 @@ function SmoothTeleportToCord(v3coords)
             CCAM = CAM.CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", true)
             CAM.SET_CAM_ACTIVE(CCAM, true)
             CAM.RENDER_SCRIPT_CAMS(true, false, 0, true, true, 0)
+        end
+        --
+        if teleportFrame then
+            util.create_tick_handler(function ()
+                if CAM.DOES_CAM_EXIST(CCAM) then
+                    local tickCamCoord = CAM.GET_CAM_COORD(CCAM)
+                    if not PED.IS_PED_IN_ANY_VEHICLE(localped, true) then --if they not in a vehicle
+                        ENTITY.SET_ENTITY_COORDS(localped, tickCamCoord.x, tickCamCoord.y, tickCamCoord.z, false, false, false, false) --teleport the player
+                    else
+                        local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
+                        ENTITY.SET_ENTITY_COORDS(veh, tickCamCoord.x, tickCamCoord.y, tickCamCoord.z, false, false, false, false) --teleport the vehicle
+                    end
+                else
+                    return false
+                end
+            end)
         end
         --
         local pc = getEntityCoords(getPlayerPed(players.user()))
@@ -111,7 +127,7 @@ function SmoothTeleportToCord(v3coords)
         end
         wait()
         local pc2 = getEntityCoords(getPlayerPed(players.user()))
-        local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - pc2.z
+        local coordDiffz = CAM.GET_CAM_COORD(CCAM).z - ground_z -2
         local camcoordz = CAM.GET_CAM_COORD(CCAM).z
         --CAM.DO_SCREEN_FADE_IN(2000) --fade in the screen
         for i = 0, 1, STP_SPEED_MODIFIER / 2 do --move the camera down
@@ -765,3 +781,48 @@ function CheckLobbyForGodmode()
 end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- OTHER LOBBY FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISSILE SPEED FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+function SetVehicleMissileSpeed(value)
+    local offsets = {0x10D8, 0x70, 0x60, 0x58}
+    local addr = entities.handle_to_pointer(PLAYER.PLAYER_PED_ID())
+    for i = 1, (#offsets - 1) do
+        -- make sure not to read from/write to a null pointer
+        if addr == 0 then
+            -- got a null pointer at some point
+            return -1.0
+        end
+        addr = memory.read_long(addr + offsets[i])
+    end
+    addr = addr + offsets[#offsets]
+    
+    if addr == 0 then
+        return -1.0
+    else
+        memory.write_float(addr, value)
+        --memory.read_float(addr)
+    end
+end
+
+function GetVehicleMissileSpeed()
+    local offsets = {0x10D8, 0x70, 0x60, 0x58}
+    local addr = entities.handle_to_pointer(PLAYER.PLAYER_PED_ID())
+    for i = 1, (#offsets - 1) do
+        -- make sure not to read from/write to a null pointer
+        if addr == 0 then
+            -- got a null pointer at some point
+            return -1.0
+        end
+        addr = memory.read_long(addr + offsets[i])
+    end
+    addr = addr + offsets[#offsets]
+    
+    if addr == 0 then
+        return -1.0
+    else
+        return memory.read_float(addr)
+    end
+end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISSILE SPEED FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
