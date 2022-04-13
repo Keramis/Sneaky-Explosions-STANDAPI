@@ -826,3 +826,34 @@ function GetVehicleMissileSpeed()
 end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISSILE SPEED FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- VEHICLE FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+function VehicleRotationWithKeys()
+    local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
+    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    --Pitch: X || Roll: y || Yaw: z
+    local vvPitch = v3.getX(vv)
+    local vvRoll = v3.getY(vv)
+    local vvYaw = v3.getZ(vv)
+    if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
+        local yawAfterPress = vvYaw + 3
+        if yawAfterPress > 180 then -- check for overflow
+            local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
+            local toSetYaw = overFlowNeg + 3
+            ENTITY.SET_ENTITY_ROTATION(veh, 10, 175, toSetYaw, 2, true)
+        else --if not overflow
+            ENTITY.SET_ENTITY_ROTATION(veh, 10, 175, yawAfterPress, 2, true)
+        end
+    end
+    if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
+        local yawAfterPress = vvYaw - 3
+        if yawAfterPress < -180 then -- check for overflow
+            local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
+            local toSetYaw = overFlowNeg - 3
+            ENTITY.SET_ENTITY_ROTATION(veh, 10, 175, toSetYaw, 2, true)
+        else --if not overflow
+            ENTITY.SET_ENTITY_ROTATION(veh, 10, 175, yawAfterPress, 2, true)
+        end
+    end
+end
