@@ -836,47 +836,47 @@ function UpsideDownVehicleRotationWithKeys()
     local vvPitch = v3.getX(vv)
     local vvRoll = v3.getY(vv)
     local vvYaw = v3.getZ(vv)
-    ENTITY.SET_ENTITY_ROTATION(veh, 10, 179.9, vvYaw, 2, true)
+    ENTITY.SET_ENTITY_ROTATION(veh, 10, 179.5, vvYaw, 2, true)
     --rotation logic (left-right || YAW)
     if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
-        if vvRoll < 90 then -- check for upside down or not
+        if vvRoll > 90 then -- check for upside down or not
             local yawAfterPress = vvYaw + 3
             if yawAfterPress > 180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
                 local toSetYaw = overFlowNeg + 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, toSetYaw, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
             else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, yawAfterPress, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
         else
             local yawAfterPress = vvYaw - 3
             if yawAfterPress < -180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
                 local toSetYaw = overFlowNeg - 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, toSetYaw, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
             else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, yawAfterPress, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
         end
     end
     if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
-        if vvRoll < 90 then --check for upside down or not
+        if vvRoll > 90 then --check for upside down or not
             local yawAfterPress = vvYaw - 3
             if yawAfterPress < -180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
                 local toSetYaw = overFlowNeg - 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, toSetYaw, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
             else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, yawAfterPress, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
         else
             local yawAfterPress = vvYaw + 3
             if yawAfterPress > 180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
                 local toSetYaw = overFlowNeg + 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, toSetYaw, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
             else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.9, yawAfterPress, 2, true)
+                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
         end
     end
