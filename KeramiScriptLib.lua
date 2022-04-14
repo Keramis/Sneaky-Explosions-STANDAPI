@@ -880,4 +880,15 @@ function UpsideDownVehicleRotationWithKeys()
             end
         end
     end
+    if PAD.IS_CONTROL_PRESSED(0, 62) then --62 || INPUT_VEH_MOVE_DOWN_ONLY || LEFT CTRL / NUM5 (NOSE UP)
+        local pitchAfterPress = vvPitch + 3
+        if pitchAfterPress > 90 then --check for overflow
+            --if pitch = 89, we add 3, we will get 88 for pitch. Distance to 90, then sub the rest.
+            local pitchToSub = 90 - (3 - math.abs(90 - vvPitch))
+            ENTITY.SET_ENTITY_ROTATION(veh, pitchToSub, 179.9, vvYaw)
+        else
+            --if not overflowed, then we just add.
+            ENTITY.SET_ENTITY_ROTATION(veh, pitchAfterPress, 179.9, vvYaw)
+        end
+    end
 end
