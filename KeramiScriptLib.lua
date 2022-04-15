@@ -839,7 +839,7 @@ function UpsideDownVehicleRotationWithKeys()
     ENTITY.SET_ENTITY_ROTATION(veh, 10, 179.5, vvYaw, 2, true)
     --rotation logic (left-right || YAW)
     if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
-        if vvRoll > 90 then -- check for upside down or not
+        --if vvRoll > 90 then -- check for upside down or not
             local yawAfterPress = vvYaw + 3
             if yawAfterPress > 180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
@@ -848,19 +848,19 @@ function UpsideDownVehicleRotationWithKeys()
             else --if not overflow
                 ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
-        else
-            local yawAfterPress = vvYaw - 3
-            if yawAfterPress < -180 then -- check for overflow
-                local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
-                local toSetYaw = overFlowNeg - 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
-            else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
-            end
-        end
+        -- else
+        --     local yawAfterPress = vvYaw - 3
+        --     if yawAfterPress < -180 then -- check for overflow
+        --         local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
+        --         local toSetYaw = overFlowNeg - 3
+        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
+        --     else --if not overflow
+        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
+        --     end
+        -- end
     end
     if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
-        if vvRoll > 90 then --check for upside down or not
+        --if vvRoll > 90 then --check for upside down or not
             local yawAfterPress = vvYaw - 3
             if yawAfterPress < -180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
@@ -869,19 +869,19 @@ function UpsideDownVehicleRotationWithKeys()
             else --if not overflow
                 ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
-        else
-            local yawAfterPress = vvYaw + 3
-            if yawAfterPress > 180 then -- check for overflow
-                local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
-                local toSetYaw = overFlowNeg + 3
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
-            else --if not overflow
-                ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
-            end
-        end
+        -- else
+        --     local yawAfterPress = vvYaw + 3
+        --     if yawAfterPress > 180 then -- check for overflow
+        --         local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
+        --         local toSetYaw = overFlowNeg + 3
+        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
+        --     else --if not overflow
+        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
+        --     end
+        -- end
     end
     if PAD.IS_CONTROL_PRESSED(0, 62) then --62 || INPUT_VEH_MOVE_DOWN_ONLY || LEFT CTRL / NUM5 (NOSE UP)
-        local pitchAfterPress = vvPitch + 3
+        local pitchAfterPress = vvPitch + 5
         if pitchAfterPress > 90 then --check for overflow
             --if pitch = 89, we add 3, we will get 88 for pitch. Distance to 90, then sub the rest.
             local pitchToSub = 90 - (3 - math.abs(90 - vvPitch))
@@ -889,6 +889,108 @@ function UpsideDownVehicleRotationWithKeys()
         else
             --if not overflowed, then we just add.
             ENTITY.SET_ENTITY_ROTATION(veh, pitchAfterPress, 179.9, vvYaw)
+        end
+    end
+end
+
+function UnlockVehicleShoot()
+    ::start::
+    local localPed = GetLocalPed()
+    if PED.IS_PED_SHOOTING(localPed) then
+        local pointer = memory.alloc(4)
+        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
+        if isEntFound then
+            local entity = memory.read_int(pointer)
+            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
+                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
+                ---------------------------------------------
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    for i = 1, 20 do
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    util.toast("Has control.")
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
+            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    for i = 1, 20 do
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
+                        wait(100)
+                    end
+                end
+                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
+                    util.toast("Waited 2 secs, couldn't get control!")
+                    goto start
+                else
+                    if SE_Notifications then
+                        util.toast("Has control.")
+                    end
+                end
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entity, 1)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
+                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
+                VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
+            end
+        end
+    end
+end
+
+function UnlockVehicleGetIn()
+    ::start::
+    local localPed = GetLocalPed()
+    local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localPed)
+    if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
+        local v = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED(v, 1)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(v, false)
+        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(v, players.user(), false)
+        wait()
+    else
+        if veh ~= 0 then
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                for i = 1, 20 do
+                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                    wait(100)
+                end
+            end
+            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
+                util.toast("Waited 2 secs, couldn't get control!")
+                goto start
+            else
+                if SE_Notifications then
+                    util.toast("Has control.")
+                end
+            end
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
+            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
+            VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
+        end
+    end
+end
+
+function TurnCarOnInstantly()
+    local localped = GetLocalPed()
+    if PED.IS_PED_GETTING_INTO_A_VEHICLE(localped) then
+        local veh = PED.GET_VEHICLE_PED_IS_ENTERING(localped)
+        if not VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(veh) then
+            VEHICLE.SET_VEHICLE_FIXED(veh)
+            VEHICLE.SET_VEHICLE_ENGINE_HEALTH(veh, 1000)
+            VEHICLE.SET_VEHICLE_ENGINE_ON(veh, true, true, false)
+        end
+        if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --15 is heli
+            VEHICLE.SET_HELI_BLADES_FULL_SPEED(veh)
         end
     end
 end
