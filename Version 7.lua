@@ -23,7 +23,7 @@ util.toast("Loaded language lib!")
 
 util.keep_running()
 
-local scriptName = "KeramisScript V.6.0"
+local scriptName = "KeramisScript V.7.0"
 
 local menuroot = menu.my_root()
 local menuAction = menu.action
@@ -46,17 +46,10 @@ STP_SPEED_MODIFIER = 0.02
 STP_COORD_HEIGHT = 300
 
 local function onStartup()
-    SE_impactinvismines = memory.alloc()
-    SE_pImpactCoord = memory.alloc() -- memory allocation for explosion gun.
     SE_LocalPed = GetLocalPed()
     SE_Notifications = false -- notifications globally
-    --------
-    SE_ArrayList = false --arraylist Global
-    SE_ArrayCount = 0 --arraylist count Global
-    SE_ArrayOffsetX = 0.0
-    SE_ArrayOffsetY = 0.0
-    SE_ArrayScale = 0.3 --arraylist text scale
-    SE_ArrayColor = {r = 1.0, g = 1.0, b = 1.0, a = 1.0} --arraylist text color
+    SEisExploInvis = true
+    SEisExploAudible = true
     --------
     util.toast("Ran startup of " .. scriptName)
 end
@@ -64,24 +57,6 @@ end
 onStartup()
 
 -----------------------------------------------------------------------------------------------------------------------------------
-
---menu toggle for if the explosion is invisible or not, uses a GLOBAL 
-SEisExploInvis = true --set it to actually be true lmfao
-menuToggle(menuroot, INVISIBLE_EXPLOSION_NAME, {"SE_invis", "seinvis"}, "Toggles whether the explosion will be invisible or not. On = Invisible. // BREAKS THE LONG-LASTING FIRE EFFECT OF THE MOLOTOV", function(on)
-    SEisExploInvis = on
-    if SE_Notifications then
-        util.toast("Explosion invisibility set to " .. tostring(on))
-    end
-end, true) --last "true" is makes invisibility enabled by default.
-
---menu toggle for if the explosion is audible or not, uses a GLOBAL
-SEisExploAudible = true
-menuToggle(menuroot, AUDIBLE_EXPLOSION_NAME, {"SE_audible", "seaudible"}, "Toggles whether the explosion will be audible or not. On = Audible.", function(on)
-    SEisExploAudible = on
-    if SE_Notifications then
-        util.toast("Explosion audability set to " .. tostring(on))
-    end
-end)
 -----------------------------------------------------------------------------------------------------------------------------------
 
 local lobbyFeats = menu.list(menuroot, LOBBY_FEATURES_NAME, {}, "")
@@ -157,13 +132,7 @@ SE_stickyCount = 1
 SE_stickyvec3 = {}
 SE_stickyvec3count = 1
 ----
-ARAY_StickyBombGun = false --ArrayList setup
-----
 menuToggleLoop(mFunFeats, IMPROVED_STICKY_BOMB_GUN_NAME, {"sbgun"}, "Notes where or what you shot, to explode it later.", function ()
-    --[[
-    if SE_ArrayList then
-        ARAY_StickyBombGun = true
-    end]]
     local pped = GetLocalPed() --get local ped, assign to "pped"
     if PED.IS_PED_SHOOTING(pped) then --check for shooting
         local tarEnt = memory.alloc() --allocate memory to get Target Entity
@@ -187,17 +156,7 @@ menuToggleLoop(mFunFeats, IMPROVED_STICKY_BOMB_GUN_NAME, {"sbgun"}, "Notes where
             end
         end
         memory.free(tarEnt)
-    end--[[
-    if SE_ArrayList then
-        if ARAY_StickyBombGun then
-            SE_ArrayCount = SE_ArrayCount + 1
-            --
-            directx.draw_text(SE_ArrayOffsetX, (SE_ArrayCount * 0.02) + SE_ArrayOffsetY, "Improved Sticky Bomb Gun", ALIGN_TOP_LEFT, SE_ArrayScale, SE_ArrayColor, false)
-            SE_ArrayCount = SE_ArrayCount - 1
-        end
-        ARAY_StickyBombGun = false
     end
-    ]]
 end)
 
 menuAction(mFunFeats, EXPLODE_ALL_STICKYBOMBS_NAME, {"expsb"}, "Explodes all marked entities and coordinate with one stickybomb.", function ()
@@ -233,8 +192,6 @@ menu.divider(mFunFeats, EXTINCTION_GUN_DIVIDER)
 MarkedForExt = {}
 MarkedForExtCount = 1
 ----
-ARAY_ExtinctionGun = false --ArrayList setup
-----
 menuToggleLoop(mFunFeats, BETTER_EXTINCTION_GUN_NAME, {}, "", function ()
     local localPed = GetLocalPed()
     if PED.IS_PED_SHOOTING(localPed) then
@@ -269,6 +226,7 @@ menuToggleLoop(mFunFeats, BETTER_EXTINCTION_GUN_NAME, {}, "", function ()
                 MarkedForExtCount = MarkedForExtCount + 1
             end
         end
+        memory.free(point)
     end
 end)
 
@@ -882,6 +840,58 @@ end)
 
 MISL_AIR = false
 
+menu.toggle(pvphelp, "Oppressor Aimbot", {"oppressoraim"}, "Why.. why tf would you do this", function (on)
+    if on then
+        MISL_AIM = true
+        local rockethash = util.joaat("w_ex_vehiclemissile_3")
+        util.create_thread(function()
+            while MISL_AIM do
+                local localped = GetLocalPed()
+                local localcoords = getEntityCoords(GetLocalPed())
+                --if RRocket ~= 0 then
+                    RRocket = OBJECT.GET_CLOSEST_OBJECT_OF_TYPE(localcoords.x, localcoords.y, localcoords.z, 10, rockethash, false, true, true, true)
+                --else
+                  --  util.toast("rocket exists")
+                --end
+                local p = GetClosestPlayerWithRange_Whitelist(MISL_RAD)
+                ----
+                if (RRocket ~= 0) and (p ~= nil) and (not PED.IS_PED_DEAD_OR_DYING(p)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)]) and (PED.IS_PED_SHOOTING(localped)) and (getEntityCoords(p).z > 0) then
+                    if (ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and MISL_LOS) or not MISL_LOS then
+                        if SE_Notifications then
+                            util.toast("Precusors done!")
+                        end
+                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                        if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(RRocket) then
+                            for i = 1, 10 do
+                                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(RRocket)
+                            end
+                        else
+                            if SE_Notifications then
+                                util.toast("has control")
+                            end
+                        end
+                        while ENTITY.DOES_ENTITY_EXIST(RRocket) do
+                            if SE_Notifications then
+                                util.toast("rocket exists")
+                            end
+                            local pcoords = PED.GET_PED_BONE_COORDS(p, 20781, 0, 0, 0)
+                            local lc = getEntityCoords(RRocket)
+                            local look = util.v3_look_at(lc, pcoords)
+                            local dir = util.rot_to_dir(look)
+                            ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(RRocket, 1, dir.x * MISL_SPD, dir.y * MISL_SPD, dir.z * MISL_SPD, true, false, true, true)
+                            wait()
+                        end
+                        --do code here, all precursors done.
+                    end
+                end
+                wait()
+            end
+        end)
+    else
+        MISL_AIM = false
+    end
+end)
+
 local rpgsettings = menu.list(pvphelp, RPG_AIMBOT_SETTINGS_NAME, {"rpgsettings"}, "")
 
 menu.toggle(rpgsettings, RPG_AIMBOT_ENABLE_JAVELIN_MODE_NAME, {"rpgjavelin"}, "Makes the rocket go very up high and kill the closest player to you :) | Advised: Combine 'RPG LOS Remove' for you to fire at targets that you do not see.", function (on)
@@ -901,19 +911,11 @@ menu.slider(rpgsettings, RPG_AIMBOT_SPEED_MULTIPLIER_NAME, {"msl_spd_mult"}, "Mu
 end)
 
 menuToggle(rpgsettings, RPG_AIMBOT_LOS_REMOVE_NAME, {}, "Removes line-of-sight checks. Do not turn this on unless you know what you're doing.", function (on)
-    if on then
-        MISL_LOS = false
-    else
-        MISL_LOS = true
-    end
+    MISL_LOS = not on
 end)
 
 menuToggle(rpgsettings, RPG_AIMBOT_DASHCAM_NAME, {"rpgcamera"}, "Now with a dashcam, you can finally find out where the fuck your rocket goes if you're using javelin mode.", function (on)
-    if on then
-        MISL_CAM = true
-    else
-        MISL_CAM = false
-    end
+    MISL_CAM = on
 end)
 
 ----------------------------------------------------------------------------------------------------
@@ -944,11 +946,7 @@ menuAction(pvphelp, ORBITAL_STRIKE_WAYPOINT_NAME, {"orbway", "orbwp"}, "Orbital 
 end)
 
 menuToggle(pvphelp, ORBITAL_STRIKE_SNEAKY_EXPLOSION_NAME, {}, "Makes the orbital not blamed on you.", function (on)
-    if on then
-        ORB_Sneaky = true
-    else
-        ORB_Sneaky = false
-    end
+    ORB_Sneaky = on
 end)
 
 ----------------------------------------------------------------------------------------------------
@@ -991,11 +989,7 @@ menuToggleLoop(pvphelp, AUTO_CAR_SUICIDE_NAME, {"carexplode"}, "Automatically ex
 end)
 
 menuToggle(pvphelp, AUTO_CAR_SUICIDE_SNEAKY_NAME, {"carexplodesneaky"}, "Makes the explosion of the car bomb not blamed on you.", function(on)
-    if on then
-        CAR_S_sneaky = true
-    else
-        CAR_S_sneaky = false
-    end
+    CAR_S_sneaky = on
 end)
 
 ----------------------------------------------------------------------------------------------------
@@ -1081,7 +1075,7 @@ menu.divider(toolFeats, "-=-=-=-=-=-=-=-=-")
 DR_TXT_SCALE = 0.5
 
 
-menuToggleLoop(toolFeats, "Draw position", {"drawpos"},  "", function ()
+menuToggleLoop(toolFeats, DRAW_POSITION_NAME, {"drawpos"},  "", function ()
     local pos = getEntityCoords(GetLocalPed())
     local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
     directx.draw_text(0.0, 0.0, "x: " .. pos.x .. " // y: " .. pos.y .. " // z: " .. pos.z, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
@@ -1106,191 +1100,70 @@ EPS_pickx = 0.0
 EPS_picky = 0.09
 --
 
-menuToggleLoop(toolFeats, "Draw Entity Pool", {"drawentpool"}, "", function ()
+menuToggleLoop(toolFeats, DRAW_ENTITY_POOL_NAME, {"drawentpool"}, "", function ()
     local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
     if EP_drawveh then
         local vehpool = entities.get_all_vehicles_as_pointers()
-        directx.draw_text(EPS_vehx, EPS_vehy, "vehicles: " .. #vehpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+        directx.draw_text(EPS_vehx, EPS_vehy, DRAW_ENTITY_POOL_VEHICLES_NAME .. #vehpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     end
     if EP_drawped then
         local pedpool = entities.get_all_peds_as_pointers()
-        directx.draw_text(EPS_pedx, EPS_pedy, "peds: " .. #pedpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+        directx.draw_text(EPS_pedx, EPS_pedy, DRAW_ENTITY_POOL_PEDS_NAME .. #pedpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     end
     if EP_drawobj then
         local objpool = entities.get_all_objects_as_pointers()
-        directx.draw_text(EPS_objx, EPS_objy, "objects: " .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+        directx.draw_text(EPS_objx, EPS_objy, DRAW_ENTITY_POOL_OBJECTS_NAME .. #objpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     end
     if EP_drawpick then
         local pickpool = entities.get_all_pickups_as_pointers()
-        directx.draw_text(EPS_pickx, EPS_picky, "pickups: " .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
+        directx.draw_text(EPS_pickx, EPS_picky, DRAW_ENTITY_POOL_PICKUPS_NAME .. #pickpool, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
     end
 end)
 
-local ePS = menu.list(toolFeats, "Entity Pool Settings", {}, "")
-menuToggle(ePS, "Draw Vehicles?", {}, "", function (toggle)
-    if toggle then
-        EP_drawveh = true
-    else
-        EP_drawveh = false
-    end
+local ePS = menu.list(toolFeats, DRAW_ENTITY_POOL_SETTINGS_NAME, {}, "")
+menuToggle(ePS, DRAW_ENTITY_POOL_VEHICLES_TOGGLE_NAME, {}, "", function (toggle)
+    EP_drawveh = toggle
 end, true)
-menu.slider(ePS, "Vehicle Text Placement X", {"epvehposx"}, "/100", 0, 100, 0, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_VEHICLES_PLACEMENTX_NAME, {"epvehposx"}, "/100", 0, 100, 0, 1, function (value)
     EPS_vehx = value / 100
 end) 
-menu.slider(ePS, "Vehicle Text Placement Y", {"epvehposy"}, "/100", 0, 100, 3, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_VEHICLES_PLACEMENTY_NAME, {"epvehposy"}, "/100", 0, 100, 3, 1, function (value)
     EPS_vehy = value / 100
 end)
-menuToggle(ePS, "Draw Peds?", {}, "", function (toggle)
-    if toggle then 
-        EP_drawped = true
-    else
-        EP_drawped = false
-    end
+menuToggle(ePS, DRAW_ENTITY_POOL_PEDS_TOGGLE_NAME, {}, "", function (toggle)
+    EP_drawped = toggle
 end, true)
-menu.slider(ePS, "Ped Text Placement X", {"eppedposx"}, "/100", 0, 100, 0, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_PEDS_PLACEMENTX_NAME, {"eppedposx"}, "/100", 0, 100, 0, 1, function (value)
     EPS_pedx = value / 100
 end)
-menu.slider(ePS, "Ped Text Placement Y", {"eppedposy"}, "/100", 0, 100, 5, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_PEDS_PLACEMENTY_NAME, {"eppedposy"}, "/100", 0, 100, 5, 1, function (value)
     EPS_pedy = value / 100
 end)
-menuToggle(ePS, "Draw Objects?", {}, "", function (toggle)
-    if toggle then
-        EP_drawobj = true
-    else
-        EP_drawobj = false
-    end
+menuToggle(ePS, DRAW_ENTITY_POOL_OBJS_TOGGLE_NAME, {}, "", function (toggle)
+    EP_drawobj = toggle
 end, true)
-menu.slider(ePS, "Object Text Placement X", {"epobjposx"}, "/100", 0, 100, 0, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_OBJS_PLACEMENTX_NAME, {"epobjposx"}, "/100", 0, 100, 0, 1, function (value)
     EPS_objx = value / 100
 end)
-menu.slider(ePS, "Object Text Placement Y", {"epobjposy"}, "/100", 0, 100, 7, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_OBJS_PLACEMENTY_NAME, {"epobjposy"}, "/100", 0, 100, 7, 1, function (value)
     EPS_objy = value / 100
 end)
-menuToggle(ePS, "Draw Pickups?", {}, "", function (toggle)
-    if toggle then
-        EP_drawpick = true
-    else
-        EP_drawpick = false
-    end
+menuToggle(ePS, DRAW_ENTITY_POOL_PICKS_TOGGLE_NAME, {}, "", function (toggle)
+    EP_drawpick = toggle
 end, true)
-menu.slider(ePS, "Pickups Text Placement X", {"epickjposx"}, "/100", 0, 100, 0, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_PICKS_PLACEMENTX_NAME, {"epickjposx"}, "/100", 0, 100, 0, 1, function (value)
     EPS_pickx = value / 100
 end)
-menu.slider(ePS, "Pickups Text Placement Y", {"epickjposy"}, "/100", 0, 100, 9, 1, function (value)
+menu.slider(ePS, DRAW_ENTITY_POOL_PICKS_PLACEMENTY_NAME, {"epickjposy"}, "/100", 0, 100, 9, 1, function (value)
     EPS_picky = value / 100
 end)
 
-menu.divider(toolFeats, "Settings")
-menu.slider(toolFeats, "Text Size (/10)", {"drscale"}, "Sets the scale of the text to the value you assign, divided by 10. This is because it only takes integer values.", 1, 50, 5, 1, function (value)
+menu.divider(toolFeats, DRAW_ENTITY_POOL_SETTINGS_DIVIDER)
+menu.slider(toolFeats, DRAW_ENTITY_POOL_SETTINGS_TEXT_SCALE_NAME, {"drscale"}, "Sets the scale of the text to the value you assign, divided by 10. This is because it only takes integer values.", 1, 50, 5, 1, function (value)
     DR_TXT_SCALE = value / 10
 end)
 
-menu.divider(toolFeats, "Others")
-menuAction(toolFeats, "Set every single thing that is a minute long to 0", {}, "", function ()
-    memory.write_int(memory.script_global(262145+30775),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+30813),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+31315),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+32109),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+16756),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+16935),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+17202),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+17206),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+17207),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+17211),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+17240),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+19291),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+21103),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+21103),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+21104),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+21129),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+22400),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+22404),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+22408),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+22524),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+22858),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+23213),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+23762),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+24100),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+24417),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+24544),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+25058),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+25065),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+25436),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+28058),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+28419),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+153),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+51),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+56),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+4667),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+4138),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+7435),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+8042),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+9877),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+10395),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+10610),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+10761),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+10863),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+11191),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+11333),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+11425),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+11808),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+11812),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+12805),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+15297),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+16403),0)
-    wait(50) 
-    memory.write_int(memory.script_global(262145+23818),0)
-end)
+menu.divider(toolFeats, TOOLS_OTHERS_DIVIDER)
 
 ----
 YOINK_PEDS = false
@@ -1302,7 +1175,7 @@ YOINK_RANGE = 500
 
 Yoinkshit = false
 
-menuToggle(toolFeats, "Yoink Control of All __", {}, "", function (yoink)
+menuToggle(toolFeats, YOINK_CONTROL_OF_ALL_NAME, {}, "", function (yoink)
     if yoink then
         Yoinkshit = true
         util.create_thread(function()
@@ -1369,153 +1242,110 @@ menuToggle(toolFeats, "Yoink Control of All __", {}, "", function (yoink)
     end
 end)
 
-local yoinkSettings = menu.list(toolFeats, "Yoink Control Settings", {}, "")
+local yoinkSettings = menu.list(toolFeats, YOINK_CONTROL_SETTINGS_NAME, {}, "")
 
-menu.slider(yoinkSettings, "Range for Yoink", {"yoinkrange"}, "", 1, 5000, 500, 10, function (value)
+menu.slider(yoinkSettings, YOINK_CONTROL_RANGE_NAME, {"yoinkrange"}, "", 1, 5000, 500, 10, function (value)
     YOINK_RANGE = value
 end)
 
-menuToggle(yoinkSettings, "Peds", {}, "", function (peds)
+menuToggle(yoinkSettings, YOINK_CONTROL_PEDS_NAME, {}, "", function (peds)
     YOINK_PEDS = peds
 end)
 
-menuToggle(yoinkSettings, "Vehicles", {}, "", function (vehs)
+menuToggle(yoinkSettings, YOINK_CONTROL_VEHICLES_NAME, {}, "", function (vehs)
     YOINK_VEHICLES = vehs
 end)
 
-menuToggle(yoinkSettings, "Objects", {}, "", function (objs)
+menuToggle(yoinkSettings, YOINK_CONTROL_OBJS_NAME, {}, "", function (objs)
     YOINK_OBJECTS = objs
 end)
 
-menuToggle(yoinkSettings, "Pickups", {}, "", function (pick)
+menuToggle(yoinkSettings, YOINK_CONTROL_PICKS_NAME, {}, "", function (pick)
     YOINK_PICKUPS = pick
 end)
 
 --------------------------------------------------------------------------------------------------------------------------
 
-local vehicleFeats = menu.list(menuroot, "Vehicle Options", {"vehicleFeats"}, "")
+local vehicleFeats = menu.list(menuroot, VEHICLE_OPTIONS_NAME, {"vehicleFeats"}, "")
 
-menuToggleLoop(vehicleFeats, "Unlock Vehicle that you shoot", {"unlockvehshot"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
-    ::start::
-    local localPed = GetLocalPed()
-    if PED.IS_PED_SHOOTING(localPed) then
-        local pointer = memory.alloc(4)
-        local isEntFound = PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), pointer)
-        if isEntFound then
-            local entity = memory.read_int(pointer)
-            if ENTITY.IS_ENTITY_A_PED(entity) and PED.IS_PED_IN_ANY_VEHICLE(entity) then
-                local vehicle = PED.GET_VEHICLE_PED_IS_IN(entity)
-                ---------------------------------------------
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    for i = 1, 20 do
-                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(vehicle)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(vehicle) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    util.toast("Has control.")
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(vehicle, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(vehicle, true)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(vehicle, players.user(), false)
-            elseif ENTITY.IS_ENTITY_A_VEHICLE(entity) then
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    for i = 1, 20 do
-                        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(entity)
-                        wait(100)
-                    end
-                end
-                if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
-                    util.toast("Waited 2 secs, couldn't get control!")
-                    goto start
-                else
-                    if SE_Notifications then
-                        util.toast("Has control.")
-                    end
-                end
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED(entity, 1)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(entity, false)
-                VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(entity, players.user(), false)
-                VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
-            end
-        end
-    end
+menu.divider(vehicleFeats, VEHICLE_TOOLS_DIVIDER)
+
+menuToggleLoop(vehicleFeats, DISPLAY_VEHICLE_ROT_NAME, {}, "", function()
+    local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
+    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    local velMag = ENTITY.GET_ENTITY_SPEED_VECTOR(veh, true).y
+    --[[
+        x = left/right
+        y = forward/backward
+        z = up/down
+    ]]
+    local entSpeed = ENTITY.GET_ENTITY_SPEED(veh)
+    directx.draw_text(0.5, 0.45, "Pitch: " .. v3.getX(vv), 1, 0.7, WhiteText, false)
+    directx.draw_text(0.5, 0.5, "Roll: " .. v3.getY(vv), 1, 0.7, WhiteText, false)
+    directx.draw_text(0.5, 0.55, "Yaw: " .. v3.getZ(vv), 1, 0.7, WhiteText, false)
+    directx.draw_text(0.5, 0.60, "Velocity: " .. tostring(velMag), 1, 0.7, WhiteText, false)
+    directx.draw_text(0.5, 0.65, "Speed: " .. tostring(entSpeed), 1, 0.7, WhiteText, false)
 end)
 
-menuToggleLoop(vehicleFeats, "Unlock vehicle that you try to get into", {"unlockvehget"}, "Unlocks a vehicle that you try to get into. This will work on locked player cars.", function ()
-    ::start::
-    local localPed = GetLocalPed()
-    local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localPed)
-    if PED.IS_PED_IN_ANY_VEHICLE(localPed, false) then
-        local v = PED.GET_VEHICLE_PED_IS_IN(localPed, false)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED(v, 1)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(v, false)
-        VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(v, players.user(), false)
-        wait()
-    else
-        if veh ~= 0 then
-            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-                for i = 1, 20 do
-                    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
-                    wait(100)
-                end
-            end
-            if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(veh) then
-                util.toast("Waited 2 secs, couldn't get control!")
-                goto start
-            else
-                if SE_Notifications then
-                    util.toast("Has control.")
-                end
-            end
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED(veh, 1)
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_ALL_PLAYERS(veh, false)
-            VEHICLE.SET_VEHICLE_DOORS_LOCKED_FOR_PLAYER(veh, players.user(), false)
-            VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
-        end
-    end
+menuToggleLoop(vehicleFeats, VEHICLE_ALWAYS_UPSIDE_DOWN_NAME, {}, "Vehicle always upside-down. Useful with the mkII.", function ()
+    UpsideDownVehicleRotationWithKeys()
+    --rotation logic (up-down || PITCH/ROLL)
+    --[[Notes:
+        Pitch can be max. 90, min. -90. This means that ROLL will have to account for upside-down behaviour.
+        We ROLL cuttoff / alternate point will be at 100, for simplicity's sake, but full-upside down, no other values changed is:
+        -Same pitch
+        -opposite roll (-180, 180)
+        -same yaw
+    ]]
 end)
 
-menuToggleLoop(vehicleFeats, "Turn Car On Instantly", {"turnvehonget"}, "Turns the car engine on instantly when you get into it, so you don't have to wait.", function ()
+local fastTurnVehicleScale = 3
+
+menuToggleLoop(vehicleFeats, VEHICLE_FAST_CUSTOM_TURN_NAME, {}, "Turn your vehicle with A/D keys, fast.", function ()
+    FastTurnVehicleWithKeys(fastTurnVehicleScale)
+end)
+
+menu.slider(vehicleFeats, VEHICLE_FAST_CUSTOM_TURN_SCALE_NAME, {"vehfastturn"}, "Set the scale for the custom turn.", 1, 1000, 30, 5, function(value)
+    fastTurnVehicleScale = value / 10
+end)
+
+menu.divider(vehicleFeats, UNLOCK_VEHICLE_DIVIDER)
+
+menuToggleLoop(vehicleFeats, UNLOCK_VEH_SHOOT_NAME, {"unlockvehshot"}, "Unlocks a vehicle that you shoot. This will work on locked player cars.", function ()
+    UnlockVehicleShoot()
+end)
+
+menuToggleLoop(vehicleFeats, UNLOCK_VEH_GET_NAME, {"unlockvehget"}, "Unlocks a vehicle that you try to get into. This will work on locked player cars.", function ()
+    UnlockVehicleGetIn()
+end)
+
+menuToggleLoop(vehicleFeats, TURN_CAR_ON_INSTANTLY_NAME, {"turnvehonget"}, "Turns the car engine on instantly when you get into it, so you don't have to wait.", function ()
+    TurnCarOnInstantly()
+end)
+
+menu.divider(vehicleFeats, AUTO_VEHICLE_DIVIDER)
+
+menuToggleLoop(vehicleFeats, AUTO_PERF_ON_GET_NAME, {"autoperf"}, "Executes the command 'perf' upon you getting into a vehicle.", function ()
     local localped = GetLocalPed()
     if PED.IS_PED_GETTING_INTO_A_VEHICLE(localped) then
-        local veh = PED.GET_VEHICLE_PED_IS_ENTERING(localped)
-        if not VEHICLE.GET_IS_VEHICLE_ENGINE_RUNNING(veh) then
-            VEHICLE.SET_VEHICLE_FIXED(veh)
-            VEHICLE.SET_VEHICLE_ENGINE_HEALTH(veh, 1000)
-            VEHICLE.SET_VEHICLE_ENGINE_ON(veh, true, true, false)
-        end
-        if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --15 is heli
-            VEHICLE.SET_HELI_BLADES_FULL_SPEED(veh)
-        end
+        menu.trigger_commands("perf")
     end
 end)
 
-menuToggleLoop(vehicleFeats, "Stop Vehicle On Getting In", {"stopvehonget"}, "Set's the car's velocity to 0 when you try to get into it. Useful on roads.", function ()
+menuToggleLoop(vehicleFeats, AUTO_TUNE_ON_GET_NAME, {"autotune"}, "Executes the command 'tune' upon you getting into a vehicle.", function()
     local localped = GetLocalPed()
     if PED.IS_PED_GETTING_INTO_A_VEHICLE(localped) then
-        local veh = PED.GET_VEHICLE_PED_IS_TRYING_TO_ENTER(localped)
-        if not VEHICLE.IS_VEHICLE_STOPPED(veh) then
-            ENTITY.FREEZE_ENTITY_POSITION(veh, true)
-            ENTITY.SET_ENTITY_VELOCITY(veh, 0, 0, 0)
-            ENTITY.FREEZE_ENTITY_POSITION(veh, false)
-        end
+        menu.trigger_commands("tune")
     end
 end)
 
-menu.divider(vehicleFeats, "Velocity Multiplier")
+menu.divider(vehicleFeats, VELOCITY_MULTIPLIER_DIVIDER)
 
 --preload
 SuperVehMultiply = 1.2
 
 BetterSuperDrive = false
-menuToggle(vehicleFeats, "Velocity Multiplier (BIND TO HOLD)", {"vehmultiply"}, "Velocity multiplier for when you are in a vehicle.", function (superd)
+menuToggle(vehicleFeats, VELOCITY_MULTIPLIER_BIND_HOLD_NAME, {"vehmultiply"}, "Velocity multiplier for when you are in a vehicle.", function (superd)
     if superd then
         local localped = GetLocalPed()
         BetterSuperDrive = true
@@ -1538,7 +1368,7 @@ menuToggle(vehicleFeats, "Velocity Multiplier (BIND TO HOLD)", {"vehmultiply"}, 
     end
 end)
 
-menuToggle(vehicleFeats, "Velocity Multiplier (Bound To Shift)", {"vehmultiplyshift"}, "Velocity multiplier for when you are in a vehicle. Already bound to LSHIFT for shift enjoyers.", function (superd)
+menuToggle(vehicleFeats, VELOCITY_MULTIPLIER_BOUND_SHIFT_NAME, {"vehmultiplyshift"}, "Velocity multiplier for when you are in a vehicle. Already bound to LSHIFT for shift enjoyers.", function (superd)
     if superd then
         local localped = GetLocalPed()
         BetterSuperDrive = true
@@ -1561,25 +1391,25 @@ menuToggle(vehicleFeats, "Velocity Multiplier (Bound To Shift)", {"vehmultiplysh
     end
 end)
 
-menu.slider(vehicleFeats, "Velocity Multiplier Multiplier (/100)", {"vehmultnum"}, "Divide by 100.", 1, 1000, 120, 10, function(val)
+menu.slider(vehicleFeats, VELOCITY_MULTIPLIER_MULTIPLIER_NAME, {"vehmultnum"}, "Divide by 100.", 1, 1000, 120, 10, function(val)
     SuperVehMultiply = val/100
 end)
 
 HAVE_SPAWN_FEATURES_BEEN_GENERATED = false
 SPAWN_FROZEN = false
 SPAWN_GOD = false
-local spawnFeats = menu.list(menuroot, "Spawn Features", {}, "")
+local spawnFeats = menu.list(menuroot, SPAWN_FEATURES_NAME, {}, "")
 
 function GenerateSpawnFeatures()
     if not HAVE_SPAWN_FEATURES_BEEN_GENERATED then
         HAVE_SPAWN_FEATURES_BEEN_GENERATED = true
         menu.divider(spawnFeats, "------------------")
         
-        local spawnPeds = menu.list(spawnFeats, "Peds", {}, "")
+        local spawnPeds = menu.list(spawnFeats, SPAWN_FEATURES_PEDS_NAME, {}, "")
         SPAWNED_PEDS = {}
         SPAWNED_PEDS_COUNT = 0
         local timeBeforePeds = util.current_time_millis()
-        menu.action(spawnPeds, "Cleanup all spawned peds", {"cleanpeds"}, "Deletes all peds that you have spawned.", function()
+        menu.action(spawnPeds, SPAWN_FEATUES_CLEAN_PEDS_NAME, {"cleanpeds"}, "Deletes all peds that you have spawned.", function()
             if SPAWNED_PEDS_COUNT ~= 0 then
                 for i = 1, SPAWNED_PEDS_COUNT do
                     entities.delete_by_handle(SPAWNED_PEDS[i])
@@ -1590,7 +1420,7 @@ function GenerateSpawnFeatures()
                 util.toast("No peds left!")
             end
         end)
-        menu.divider(spawnPeds, "Spawns")
+        menu.divider(spawnPeds, SPAWN_FEATURES_PEDS_SPAWNS_NAME)
         for i = 1, #UNIVERSAL_PEDS_LIST do
             menu.action(spawnPeds, "Spawn " .. tostring(UNIVERSAL_PEDS_LIST[i]), {"catspawnped " .. tostring(UNIVERSAL_PEDS_LIST[i])}, "", function()
                 SPAWNED_PEDS_COUNT = SPAWNED_PEDS_COUNT + 1
@@ -1610,11 +1440,11 @@ function GenerateSpawnFeatures()
 
         util.toast("It took about " .. timeAfterPeds - timeBeforePeds .. " milliseconds to generate ped spawn features!")
         ----------------------------------------------------------------------------
-        local spawnObjs = menu.list(spawnFeats, "Objects", {}, "")
+        local spawnObjs = menu.list(spawnFeats, SPAWN_FEATURES_OBJS_NAME, {}, "")
         SPAWNED_OBJS = {}
         SPAWNED_OBJ_COUNT = 0
         local timeBeforeObjs = util.current_time_millis()
-        menu.action(spawnObjs, "Cleanup all spawned objects", {"cleanobjs"}, "Deletes all objects that you have spawned.", function()
+        menu.action(spawnObjs, SPAWN_FEATUES_CLEAN_OBJS_NAME, {"cleanobjs"}, "Deletes all objects that you have spawned.", function()
             if SPAWNED_OBJ_COUNT ~= 0 then
                 for i = 1, SPAWNED_OBJ_COUNT do
                     entities.delete_by_handle(SPAWNED_OBJS[i])
@@ -1625,6 +1455,7 @@ function GenerateSpawnFeatures()
                 util.toast("No objects left!")
             end
         end)
+        menu.divider(spawnObjs, SPAWN_FEATURES_OBJS_OBJS_NAME)
         for i = 1, #UNIVERSAL_OBJECTS_LIST do
             menu.action(spawnObjs, "Spawn " .. tostring(UNIVERSAL_OBJECTS_LIST[i]), {"catspawnobj " .. tostring(UNIVERSAL_OBJECTS_LIST[i])}, "", function ()
                 SPAWNED_OBJ_COUNT = SPAWNED_OBJ_COUNT + 1
@@ -1646,10 +1477,10 @@ function GenerateSpawnFeatures()
 
         -----
 
-        menu.toggle(spawnFeats, "Spawn frozen?", {}, "This will spawn the peds/objects frozen in place.", function(on)
+        menu.toggle(spawnFeats, SPAWN_FEATURES_SPAWN_FROZEN_NAME, {}, "This will spawn the peds/objects frozen in place.", function(on)
             SPAWN_FROZEN = on
         end)
-        menu.toggle(spawnFeats, "Spawn godmode?", {}, "This will spawn the peds/objects unable to take damage.", function(on)
+        menu.toggle(spawnFeats, SPAWN_FEATURES_SPAWN_GODMODE_NAME, {}, "This will spawn the peds/objects unable to take damage.", function(on)
             SPAWN_GOD = on
         end)
     else
@@ -1657,97 +1488,56 @@ function GenerateSpawnFeatures()
     end
 end
 
-menuAction(spawnFeats, "Generate spawn features", {}, "Generates the spawn features. This is not done automatically due to it taking time/causing lag.", function()
+menuAction(spawnFeats, SPAWN_FEATURES_GENERATE_SPAWN_FEATURES_NAME, {}, "Generates the spawn features. This is not done automatically due to it taking time/causing lag.", function()
     GenerateSpawnFeatures()
 end)
 
-menu.divider(menuroot, "----------Settings----------")
+menu.divider(menuroot, MENU_SETTINGS_DIVIDER)
 
-menuToggle(menuroot, "Enable/Disable notifications", {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
-    if on then
-        SE_Notifications = true
-    else
-        SE_Notifications = false
+menuToggle(menuroot, INVISIBLE_EXPLOSION_NAME, {"SE_invis", "seinvis"}, "Toggles whether the explosion will be invisible or not. On = Invisible. // BREAKS THE LONG-LASTING FIRE EFFECT OF THE MOLOTOV", function(on)
+    SEisExploInvis = on
+    if SE_Notifications then
+        util.toast("Explosion invisibility set to " .. tostring(on))
+    end
+end, true) --last "true" is makes invisibility enabled by default.
+
+menuToggle(menuroot, AUDIBLE_EXPLOSION_NAME, {"SE_audible", "seaudible"}, "Toggles whether the explosion will be audible or not. On = Audible.", function(on)
+    SEisExploAudible = on
+    if SE_Notifications then
+        util.toast("Explosion audability set to " .. tostring(on))
     end
 end)
 
-menuToggle(menuroot, "Enable/Disable ArrayList", {"arraylist"}, "God, please, save me. Save me from this.", function(on)
-    if on then
-        SE_ArrayList = true
-    else
-        SE_ArrayList = false
-    end
+menuToggle(menuroot, MENU_SETTINGS_NOTIFICATIONS_NAME, {}, "Disables notifications like 'stickybomb placed!' or 'entity marked.' Stuff like that. Those get annoying with the Pan feature especially.", function(on)
+    SE_Notifications = on
 end)
-
-
 
 --preload explosion delay
 SE_explodeDelay = 0
 local function playerActionsSetup(pid) --set up player actions (necessary for each PID)
     menu.divider(menu.player_root(pid), scriptName)
-    local playerMain = menu.list(menu.player_root(pid), scriptName, {"SneakyE", "SneakyExplodes"}, "")
+    local playerMain = menu.list(menu.player_root(pid), scriptName, {}, "")
     menu.divider(playerMain, scriptName)
-    local playerSuicides = menu.list(playerMain, "Suicides", {}, "") --suicides parent
-    local playerWeapons = menu.list(playerMain, "Weapons", {}, "") -- weapons parent
-    local playerTools = menu.list(playerMain, "Tools", {}, "") --tools parent
-    local playerOtherTrolling = menu.list(playerMain, "Trolling", {}, "")
+    local playerSuicides = menu.list(playerMain, MENU_PLAYER_SUICIDES_NAME, {}, "") --suicides parent
+    local playerWeapons = menu.list(playerMain, MENU_PLAYER_WEAPONS_NAME, {}, "") -- weapons parent
+    local playerTools = menu.list(playerMain, MENU_PLAYER_TOOLS_NAME, {}, "") --tools parent
+    local playerOtherTrolling = menu.list(playerMain, MENU_PLAYER_TROLLING_NAME, {}, "")
     
     
     --suicides
 
     menuAction(playerSuicides, "Make Player Explode Themselves", {"suicide"}, "", function()
-        local playerPed = getPlayerPed(pid)
-        local playerCoords = getEntityCoords(playerPed)
-        -- checks for interior, godmode, and vehicle all in one if / elseif statement...
-        if players.is_godmode(pid) and not players.is_in_interior(pid) then
-            util.toast("Player is in godmode, stopping explode...")
-        elseif players.is_in_interior(pid) then
-            util.toast("Player is in an interior, stopping explode...")
-        elseif PED.IS_PED_IN_ANY_VEHICLE(playerPed, true) then
-            for i = 0, 50, 1 do --50 explosions to account for armored vehicles, using type 5, as a tank shell as well xD
-                SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 5, 10, SEisExploAudible, SEisExploInvis, 0)
-                wait(10)
-            end
-        else
-            SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 1, 10, SEisExploAudible, SEisExploInvis, 0)
-        end
+        MakePlayerExplodeSuicide(pid)
     end)
     menuToggleLoop(playerSuicides, "Loop Explode Suicide", {"loopsuicide"}, "Loops suicidal explosions.", function()
-        local playerPed = getPlayerPed(pid)
-        local playerCoords = getEntityCoords(playerPed)
-        -- checks for interior, godmode in one if / elseif statement...
-        if players.is_godmode(pid) and not players.is_in_interior(pid) then
-            util.toast("Player is in godmode, stopping explode...")
-        elseif players.is_in_interior(pid) then
-            util.toast("Player is in an interior, stopping explode...")
-        else
-            SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 1, 10, SEisExploAudible, SEisExploInvis, 0)
-        end
+        MakePlayerExplodeSuicide(pid)
         wait(SE_explodeDelay)
     end)
     menuAction(playerSuicides, "Make Player Molotov Themselves", {"suimolly", "suimolotov"}, "Fire will not stay on the player if invisibility is enabled.", function()
-        local playerPed = getPlayerPed(pid)
-        local playerCoords = getEntityCoords(playerPed)
-        --checks for godmode and interior
-        if players.is_godmode(pid) and not players.is_in_interior(pid) then
-            util.toast("Player is in godmode, stopping explode...")
-        elseif players.is_in_interior(pid) then
-            util.toast("Player is in an interior, stopping explode...")
-        else
-            SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 3, 10, SEisExploAudible, SEisExploInvis, 0)
-        end
+        MakePlayerMolotovSuicide(pid)
     end)
     menuToggleLoop(playerSuicides, "Loop Molotov Suicide", {"loopsuimolly", "loopsuimolotov"}, "Loops suicidal molotovs.", function()
-        local playerPed = getPlayerPed(pid)
-        local playerCoords = getEntityCoords(playerPed)
-        --checks for godmode and interior
-        if players.is_godmode(pid) and not players.is_in_interior(pid) then
-            util.toast("Player is in godmode, stopping explode...")
-        elseif players.is_in_interior(pid) then
-            util.toast("Player is in an interior, stopping explode...")
-        else
-            SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 3, 10, SEisExploAudible, SEisExploInvis, 0)
-        end
+        MakePlayerMolotovSuicide(pid)
         wait(SE_explodeDelay)
     end)
 
@@ -1761,34 +1551,16 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     menuToggleLoop(playerWeapons, "Explosion Gun", {"pexplogun"}, "Gives the player an explosion gun.", function ()
         local pped = getPlayerPed(pid)
-        local shot = WEAPON.GET_PED_LAST_WEAPON_IMPACT_COORD(pped, SE_pImpactCoord)
+        local impactCoord = v3.new()
+        local shot = WEAPON.GET_PED_LAST_WEAPON_IMPACT_COORD(pped, impactCoord)
         if shot then
-            local explo = memory.read_vector3(SE_pImpactCoord)
+            --local explo = {x = v3.getX(impactCoord), y = v3.getY(impactCoord), z = v3.getZ(impactCoord)}
+            local explo = GetTableFromV3Instance(impactCoord)
             SE_add_owned_explosion(pped, explo.x, explo.y, explo.z, 2, 10, SEisExploAudible, SEisExploInvis, 0)
         end
+        v3.free(impactCoord)
     end)
 
-
-   --[[ menuToggleLoop(playerWeapons, "Kick gun", {"pkickgun"}, "Gives the player a delete gun.", function ()
-        local pped = getPlayerPed(pid)
-        if PED.IS_PED_SHOOTING(pped) then
-            local allocCord = memory.alloc()
-            local junk = WEAPON.GET_PED_LAST_WEAPON_IMPACT_COORD(pped, allocCord)
-            local coord = memory.read_vector3(allocCord)
-            if coord.x == 0 and coord.y == 0 and coord.z == 0 then
-                --check if the shot was shot into the air, and if it was, do nothing.
-            else
-                if SE_Notifications then
-                    util.toast(coord.x .. " " .. coord.y .. " " .. coord.z)
-                end
-                local ourEntity = FIRE._GET_ENTITY_INSIDE_EXPLOSION_SPHERE(1, coord.x, coord.y, coord.z, 5)
-                if ENTITY.IS_ENTITY_A_PED(ourEntity) then
-                    util.toast("Valid ped.")
-                end
-            end
-            memory.free(allocCord)
-        end
-    end)]]
     -----------------------------------------------------------------------------------------------------------------------------------
 
     --other trolling
@@ -2010,7 +1782,7 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     menu.divider(playerOtherTrolling, "Toxic Features")
     local ptoxic = menu.list(playerOtherTrolling, "Toxic Features", {}, "")
     -----------------------------------
-    
+
     --DELDEL
     menuAction(ptoxic, "Send to Warehouse", {}, "", function ()
         util.trigger_script_event(1 << pid, {-446275082, pid, 0, 1, 0})
@@ -2354,354 +2126,14 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     menu.divider(playerMain, "Settings")
 
     menuToggle(playerMain, "Blacklist from Silent Aimbot", {"aimblacklist"}, "Blacklists the selected player from silent aimbot.", function(on)
-        if on then
-            AIM_WHITELIST[pid] = true
-        else
-            AIM_WHITELIST[pid] = false
-        end
+        AIM_WHITELIST[pid] = on
     end)
 
     menuToggle(playerMain, "Blacklist from Auto Car-Suicide", {"carbombblacklist"}, "Blacklists the selected player from flagging a Car Suicide Explosion.", function(on)
-        if on then
-            CAR_S_BLACKLIST[pid] = true
-        else
-            CAR_S_BLACKLIST[pid] = false
-        end
+        CAR_S_BLACKLIST[pid] = on
     end)
 
 end
 
 players.on_join(playerActionsSetup)
 players.dispatch_on_join()
-
---[[ WEAPON HASHES
-weapon hash: 584646201
-actual gun: AP Pistol
---------------------------------------------------------------------
-weapon hash: 727643628
-actual gun: Ceramic Pistol
---------------------------------------------------------------------
-weapon hash: 911657153
-actual gun: Stun Gun
---------------------------------------------------------------------
-weapon hash: 1171102963
-actual gun: Stun Gun
---------------------------------------------------------------------
-weapon hash: 1198879012
-actual gun: Flare Gun
---------------------------------------------------------------------
-weapon hash: 1470379660
-actual gun: Perico Pistol
---------------------------------------------------------------------
-weapon hash: 1593441988
-actual gun: Combat Pistol
---------------------------------------------------------------------
-weapon hash: 2285322324
-actual gun: SNS Pistol Mk II
---------------------------------------------------------------------
-weapon hash: 2441047180
-actual gun: Navy Revolver
---------------------------------------------------------------------
-weapon hash: 2548703416
-actual gun: Double-Action Revolver
---------------------------------------------------------------------
-weapon hash: 2578377531
-actual gun: Pistol .50
---------------------------------------------------------------------
-weapon hash: 2939590305
-actual gun: Up-n-Atomizer
---------------------------------------------------------------------
-weapon hash: 3218215474
-actual gun: SNS Pistol
---------------------------------------------------------------------
-weapon hash: 3219281620
-actual gun: Pistol Mk II
---------------------------------------------------------------------
-weapon hash: 3249783761
-actual gun: Heavy Revolver
---------------------------------------------------------------------
-weapon hash: 3415619887
-actual gun: Heavy Revolver Mk II
---------------------------------------------------------------------
-weapon hash: 3523564046
-actual gun: Heavy Pistol
---------------------------------------------------------------------
-weapon hash: 3696079510
-actual gun: Marksman Pistol
---------------------------------------------------------------------
-weapon hash: 171789620
-actual gun: Combat PDW
---------------------------------------------------------------------
-weapon hash: 324215364
-actual gun: Micro SMG
---------------------------------------------------------------------
-weapon hash: 736523883
-actual gun: SMG
---------------------------------------------------------------------
-weapon hash: 1198256469
-actual gun: Unholy Hellbringer
---------------------------------------------------------------------
-weapon hash: 1627465347
-actual gun: Gusenberg Sweeper
---------------------------------------------------------------------
-weapon hash: 2024373456
-actual gun: SMG Mk II
---------------------------------------------------------------------
-weapon hash: 2144741730
-actual gun: Combat MG
---------------------------------------------------------------------
-weapon hash: 2634544996
-actual gun: MG
---------------------------------------------------------------------
-weapon hash: 3173288789
-actual gun: Mini SMG
---------------------------------------------------------------------
-weapon hash: 3675956304
-actual gun: Machine Pistol
---------------------------------------------------------------------
-weapon hash: 3686625920
-actual gun: Combat MG Mk II
---------------------------------------------------------------------
-weapon hash: 4024951519
-actual gun: Assault SMG
---------------------------------------------------------------------
-weapon hash: 961495388
-actual gun: Assault Rifle Mk II
---------------------------------------------------------------------
-weapon hash: 1649403952
-actual gun: Compact Rifle
---------------------------------------------------------------------
-weapon hash: 2132975508
-actual gun: Bullpup Rifle
---------------------------------------------------------------------
-weapon hash: 2210333304
-actual gun: Carbine Rifle
---------------------------------------------------------------------
-weapon hash: 2228681469
-actual gun: Bullpup Rifle Mk II
---------------------------------------------------------------------
-weapon hash: 2526821735
-actual gun: Special Carbine Mk II
---------------------------------------------------------------------
-weapon hash: 2636060646
-actual gun: Military Rifle
---------------------------------------------------------------------
-weapon hash: 2937143193
-actual gun: Advanced Rifle
---------------------------------------------------------------------
-weapon hash: 3220176749
-actual gun: Assault Rifle
---------------------------------------------------------------------
-weapon hash: 3231910285
-actual gun: Special Carbine
---------------------------------------------------------------------
-weapon hash: 3347935668
-actual gun: Heavy Rifle
---------------------------------------------------------------------
-weapon hash: 4208062921
-actual gun: Carbine Rifle Mk II
---------------------------------------------------------------------
-weapon hash: 100416529
-actual gun: Sniper Rifle
---------------------------------------------------------------------
-weapon hash: 177293209
-actual gun: Heavy Sniper Mk II
---------------------------------------------------------------------
-weapon hash: 205991906
-actual gun: Heavy Sniper
---------------------------------------------------------------------
-weapon hash: 1785463520
-actual gun: Marksman Rifle Mk II
---------------------------------------------------------------------
-weapon hash: 3342088282
-actual gun: Marksman Rifle
---------------------------------------------------------------------
-weapon hash: 419712736
-actual gun: Pipe Wrench
---------------------------------------------------------------------
-weapon hash: 940833800
-actual gun: Stone Hatchet
---------------------------------------------------------------------
-weapon hash: 1141786504
-actual gun: Golf Club
---------------------------------------------------------------------
-weapon hash: 1317494643
-actual gun: Hammer
---------------------------------------------------------------------
-weapon hash: 1737195953
-actual gun: Nightstick
---------------------------------------------------------------------
-weapon hash: 2227010557
-actual gun: Crowbar
---------------------------------------------------------------------
-weapon hash: 2343591895
-actual gun: Flashlight
---------------------------------------------------------------------
-weapon hash: 2460120199
-actual gun: Antique Cavalry Dagger
---------------------------------------------------------------------
-weapon hash: 2484171525
-actual gun: Pool Cue
---------------------------------------------------------------------
-weapon hash: 2508868239
-actual gun: Baseball Bat
---------------------------------------------------------------------
-weapon hash: 2578778090
-actual gun: Knife
---------------------------------------------------------------------
-weapon hash: 3441901897
-actual gun: Battle Axe
---------------------------------------------------------------------
-weapon hash: 3638508604
-actual gun: Knuckle Duster
---------------------------------------------------------------------
-weapon hash: 3713923289
-actual gun: Machete
---------------------------------------------------------------------
-weapon hash: 3756226112
-actual gun: Switchblade
---------------------------------------------------------------------
-weapon hash: 4191993645
-actual gun: Hatchet
---------------------------------------------------------------------
-weapon hash: 4192643659
-actual gun: Bottle
---------------------------------------------------------------------
-weapon hash: 94989220
-actual gun: Combat Shotgun
---------------------------------------------------------------------
-weapon hash: 317205821
-actual gun: Sweeper Shotgun
---------------------------------------------------------------------
-weapon hash: 487013001
-actual gun: Pump Shotgun
---------------------------------------------------------------------
-weapon hash: 984333226
-actual gun: Heavy Shotgun
---------------------------------------------------------------------
-weapon hash: 1432025498
-actual gun: Pump Shotgun Mk II
---------------------------------------------------------------------
-weapon hash: 2017895192
-actual gun: Sawed-Off Shotgun
---------------------------------------------------------------------
-weapon hash: 2640438543
-actual gun: Bullpup Shotgun
---------------------------------------------------------------------
-weapon hash: 2828843422
-actual gun: Musket
---------------------------------------------------------------------
-weapon hash: 3800352039
-actual gun: Assault Shotgun
---------------------------------------------------------------------
-weapon hash: 4019527611
-actual gun: Double Barrel Shotgun
---------------------------------------------------------------------
-weapon hash: 125959754
-actual gun: Compact Grenade Launcher
---------------------------------------------------------------------
-weapon hash: 1119849093
-actual gun: Minigun
---------------------------------------------------------------------
-weapon hash: 1672152130
-actual gun: Homing Launcher
---------------------------------------------------------------------
-weapon hash: 1752584910
-actual gun: RPG
---------------------------------------------------------------------
-weapon hash: 1834241177
-actual gun: Railgun
---------------------------------------------------------------------
-weapon hash: 2138347493
-actual gun: Firework Launcher
---------------------------------------------------------------------
-weapon hash: 2726580491
-actual gun: Grenade Launcher
---------------------------------------------------------------------
-weapon hash: 2982836145
-actual gun: RPG
---------------------------------------------------------------------
-weapon hash: 3056410471
-actual gun: Widowmaker
---------------------------------------------------------------------
-weapon hash: 3676729658
-actual gun: Compact EMP Launcher
---------------------------------------------------------------------
-weapon hash: 101631238
-actual gun: Fire Extinguisher
---------------------------------------------------------------------
-weapon hash: 126349499
-actual gun: Snowball
---------------------------------------------------------------------
-weapon hash: 406929569
-actual gun: Fertilizer Can
---------------------------------------------------------------------
-weapon hash: 600439132
-actual gun: Ball
---------------------------------------------------------------------
-weapon hash: 615608432
-actual gun: Molotov
---------------------------------------------------------------------
-weapon hash: 741814745
-actual gun: Sticky Bomb
---------------------------------------------------------------------
-weapon hash: 883325847
-actual gun: Jerry Can
---------------------------------------------------------------------
-weapon hash: 1233104067
-actual gun: Flare
---------------------------------------------------------------------
-weapon hash: 2481070269
-actual gun: Grenade
---------------------------------------------------------------------
-weapon hash: 2694266206
-actual gun: BZ Gas
---------------------------------------------------------------------
-weapon hash: 2874559379
-actual gun: Proximity Mine
---------------------------------------------------------------------
-weapon hash: 3125143736
-actual gun: Pipe Bomb
---------------------------------------------------------------------
-weapon hash: 3126027122
-actual gun: Hazardous Jerry Can
---------------------------------------------------------------------
-weapon hash: 4256991824
-actual gun: Tear Gas
---------------------------------------------------------------------
-]]
-
---[[
-
-menu.action(
-        explosions,
-        "Airstrike",
-        {"orbairstrike"},
-        "",
-        function(on_click)
-            local selectedPlayer = PLAYER.GET_PLAYER_PED_SCRIPT_INDEX(pid)
-            local playerPed = PLAYER.PLAYER_PED_ID()
-            local coords = ENTITY.GET_ENTITY_COORDS(selectedPlayer, 1)
-            local airStrike = MISC.GET_HASH_KEY("WEAPON_AIRSTRIKE_ROCKET")
-            WEAPON.REQUEST_WEAPON_ASSET(airStrike, 31, false)
-            while not WEAPON.HAS_WEAPON_ASSET_LOADED(airStrike) do
-                util.yield()
-            end
-            MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(
-                coords.x,
-                coords.y,
-                coords.z + 50,
-                coords.x,
-                coords.y,
-                coords.z,
-                250,
-                1,
-                airStrike,
-                playerPed,
-                1,
-                0,
-                -1.0
-            )
-        end
-    )
-]]
