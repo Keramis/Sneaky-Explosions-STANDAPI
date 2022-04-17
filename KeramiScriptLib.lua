@@ -16,6 +16,8 @@ local giveWeaponToPed = WEAPON.GIVE_WEAPON_TO_PED
 
 WhiteText = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
 
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISC FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 function GetLocalPed()
     return PLAYER.PLAYER_PED_ID()
 end
@@ -56,6 +58,16 @@ function EaseInOutCubic(x) --Thank you QUICKNET for re-writing this function!
         return 1 - ((-2 * x + 2) ^ 3) / 2
     end
 end
+
+function GetTableFromV3Instance(v3int)
+    local tbl = {x = v3.getX(v3int), y = v3.getY(v3int), z = v3.getZ(v3int)}
+    return tbl
+end
+
+
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISC FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- CAM FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -221,6 +233,7 @@ end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- CAM FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- NETWORK FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 function FastNet(entity, playerID)
@@ -308,7 +321,22 @@ function NetIt(entity, playerID)
     end
 end
 
+function GetGamerHandleFromPlayer(playerID)
+    local gmr_hndl = memory.alloc(104)
+    NETWORK.NETWORK_HANDLE_FROM_PLAYER(playerID, gmr_hndl, 13)
+    if NETWORK.NETWORK_IS_HANDLE_VALID(gmr_hndl, 13) then
+        local gamerHandle = gmr_hndl
+        memory.free(gmr_hndl)
+        return gamerHandle
+    else
+        memory.free(gmr_hndl)
+        util.toast("GamerHandle failed!")
+        return nil
+    end
+end
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- NETWORK FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- POSITION FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -466,6 +494,43 @@ function SpawnObjectOnPlayer(hash, pid)
 end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MODEL FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- SUICIDE FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+function MakePlayerExplodeSuicide(pid)
+    local playerPed = getPlayerPed(pid)
+    local playerCoords = getEntityCoords(playerPed)
+    -- checks for interior, godmode, and vehicle all in one if / elseif statement...
+    if players.is_godmode(pid) and not players.is_in_interior(pid) then
+        util.toast("Player is in godmode, stopping explode...")
+    elseif players.is_in_interior(pid) then
+        util.toast("Player is in an interior, stopping explode...")
+    elseif PED.IS_PED_IN_ANY_VEHICLE(playerPed, true) then
+        for i = 0, 50, 1 do --50 explosions to account for armored vehicles, using type 5, as a tank shell as well xD
+            SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 5, 10, SEisExploAudible, SEisExploInvis, 0)
+            wait(10)
+        end
+    else
+        SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 1, 10, SEisExploAudible, SEisExploInvis, 0)
+    end
+end
+
+function MakePlayerMolotovSuicide(pid)
+    local playerPed = getPlayerPed(pid)
+    local playerCoords = getEntityCoords(playerPed)
+    --checks for godmode and interior
+    if players.is_godmode(pid) and not players.is_in_interior(pid) then
+        util.toast("Player is in godmode, stopping explode...")
+    elseif players.is_in_interior(pid) then
+        util.toast("Player is in an interior, stopping explode...")
+    else
+        SE_add_owned_explosion(playerPed, playerCoords.x, playerCoords.y, playerCoords.z, 3, 10, SEisExploAudible, SEisExploInvis, 0)
+    end
+end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- SUICIDE FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -690,7 +755,199 @@ function AIOKickAll()
     wait(100)
 end
 
+function FreemodeDeathPlayer(pid)
+    for i = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(1 << pid, {-65587051, 28, i, n})
+        end
+    end
+    for i = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(1 << pid, {1445703181, 28, i, n})
+        end
+    end
+    wait(100)
+    util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+    util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+    util.trigger_script_event(1 << pid, {2002459655, -1000000, -10000, -100000000})
+    util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
+    for i = -1, 1 do
+        for a = -1, 1 do
+            util.trigger_script_event(1 << pid, {916721383, i, a, 0, 26})
+        end
+    end
+end
+
+function AIOKickPlayer(pid)
+    if SE_Notifications then
+        util.toast("Player connected " .. tostring(PLAYER.GET_PLAYER_NAME(pid) .. ", commencing AIO."))
+    end
+    util.trigger_script_event(1 << pid, {0x37437C28, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-1308840134, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x4E0350C6, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x114C63AC, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x15F5B1D4, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x249FE11B, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x76B11968, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x9C050EC, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x3B873479, 1, 15, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x23F74138, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    --[[
+    util.trigger_script_event(1 << pid, {0xAD63290E, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10)
+    ]]
+    --[[ 
+    util.trigger_script_event(1 << pid, {0x39624029, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    ]]
+    util.trigger_script_event(1 << pid, {-0x529CD6F2, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x756DBC8A, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x69532BA0, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x68C5399F, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x7DE8CAC0, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {0x285DDF33, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10) 
+    util.trigger_script_event(1 << pid, {-0x177132B8, math.random(-2147483647, 2147483647), 1, 115, math.random(-2147483647, 2147483647)})
+    wait(10)
+    --util.toast("Main block done. // AIO")
+    util.trigger_script_event(1 << pid, {memory.script_global(1893548 + (1 + (pid * 600) + 511)), pid})
+    for a = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(1 << pid, {-65587051, 28, a, n})
+            wait(10)
+        end
+    end
+    --util.toast("Second block done. // AIO")
+    for a = -1, 1 do
+        for n = -1, 1 do
+            util.trigger_script_event(1 << pid, {1445703181, 28, a, n})
+            wait(10)
+        end
+    end
+    --util.toast("Third block done. // AIO")
+    if TXC_SLOW then
+        wait(10)
+        util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+        wait(10)
+        util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+        wait(10)
+        util.trigger_script_event(1 << pid, {2002459655, -1000000, -10000, -100000000})
+        wait(10)
+        util.trigger_script_event(1 << pid, {911179316, -38, -30, -75, -59, 85, 82})
+        wait(10)
+        --[[
+        for n = -10, -7 do
+            for a = -60, 60 do
+                util.trigger_script_event(1 << pid, {0x39624029, n, 623656, a, 73473741, -7, 856844, -51251, 856844})
+                wait(10)
+            end
+        end]]
+        util.trigger_script_event(1 << pid, {-290218924, -32190, -71399, 19031, 85474, 4468, -2112})
+        wait(10)
+        util.trigger_script_event(1 << pid, {-1386010354, 91645, -99683, 1788, 60877, 55085, 72028})
+        wait(10)
+        util.trigger_script_event(1 << pid, {-227800145, -1000000, -10000000, -100000000, -100000000, -100000000})
+        wait(10)
+        for g = -28, 0 do
+            for n = -1, 1 do
+                for a = -1, 1 do
+                    util.trigger_script_event(1 << pid, {1445703181, g, n, a})
+                end
+            end
+            wait(10)
+        end
+        --[[for a = -28, 20 do
+            for n = -10, 2 do
+                for b = -100, 100 do
+                    util.trigger_script_event(1 << pid, {-1782442696, b, n, a})
+                    util.log("Number 6, iteration " .. b)
+                end
+                util.log("Number 7, iteration " .. n)
+            end
+            util.log("Number 8, iteration " .. a)
+            wait(10)
+        end]]
+        for a = -11, 11 do
+            util.trigger_script_event(1 << pid, {2002459655, -1000000, a, -100000000})
+        end
+        for a = -10, 10 do
+            for n = 30, -30 do
+                util.trigger_script_event(1 << pid, {911179316, a, n, -75, -59, 85, 82})
+            end
+        end
+        for a = -10, 10 do
+            util.trigger_script_event(1 << pid, {-65587051, a, -1, -1})
+        end
+        util.trigger_script_event(1 << pid, {951147709, pid, 1000000, nil, nil}) 
+        for a = -10, 10 do
+            util.trigger_script_event(1 << pid, {-1949011582, a, 1518380048})
+        end
+        for a = -10, 4 do
+            for n = -10, 5 do
+                util.trigger_script_event(1 << pid, {1445703181, 28, a, n})
+            end
+        end
+    end
+    if SE_Notifications then
+        util.toast("Fourth block done. // AIO")
+        util.toast("Iteration " .. pid .. " complete of AIO kick.")
+        util.toast("Player " .. PLAYER.GET_PLAYER_NAME(pid) .. " done.")
+    end
+end
+
+function PlagueCrashPlayer(pid)
+    for i = 1, 10 do
+        local cord = getEntityCoords(getPlayerPed(pid))
+        requestModel(-930879665)
+        wait(10)
+        requestModel(3613262246)
+        wait(10)
+        requestModel(452618762)
+        wait(10)
+        while not hasModelLoaded(-930879665) do wait() end
+        while not hasModelLoaded(3613262246) do wait() end
+        while not hasModelLoaded(452618762) do wait() end
+        local a1 = entities.create_object(-930879665, cord)
+        wait(10)
+        local a2 = entities.create_object(3613262246, cord)
+        wait(10)
+        local b1 = entities.create_object(452618762, cord)
+        wait(10)
+        local b2 = entities.create_object(3613262246, cord)
+        wait(300)
+        entities.delete_by_handle(a1)
+        entities.delete_by_handle(a2)
+        entities.delete_by_handle(b1)
+        entities.delete_by_handle(b2)
+        noNeedModel(452618762)
+        wait(10)
+        noNeedModel(3613262246)
+        wait(10)
+        noNeedModel(-930879665)
+        wait(10)
+        end
+        if SE_Notifications then
+            util.toast("Finished.")
+        end
+end
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- OTHER LOBBY FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -839,7 +1096,6 @@ function UpsideDownVehicleRotationWithKeys()
     ENTITY.SET_ENTITY_ROTATION(veh, 10, 179.5, vvYaw, 2, true)
     --rotation logic (left-right || YAW)
     if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
-        --if vvRoll > 90 then -- check for upside down or not
             local yawAfterPress = vvYaw + 3
             if yawAfterPress > 180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
@@ -848,19 +1104,8 @@ function UpsideDownVehicleRotationWithKeys()
             else --if not overflow
                 ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
-        -- else
-        --     local yawAfterPress = vvYaw - 3
-        --     if yawAfterPress < -180 then -- check for overflow
-        --         local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
-        --         local toSetYaw = overFlowNeg - 3
-        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
-        --     else --if not overflow
-        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
-        --     end
-        -- end
     end
     if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
-        --if vvRoll > 90 then --check for upside down or not
             local yawAfterPress = vvYaw - 3
             if yawAfterPress < -180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
@@ -869,16 +1114,6 @@ function UpsideDownVehicleRotationWithKeys()
             else --if not overflow
                 ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
             end
-        -- else
-        --     local yawAfterPress = vvYaw + 3
-        --     if yawAfterPress > 180 then -- check for overflow
-        --         local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
-        --         local toSetYaw = overFlowNeg + 3
-        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, toSetYaw, 2, true)
-        --     else --if not overflow
-        --         ENTITY.SET_ENTITY_ROTATION(veh, 10 --[[10]], 179.5, yawAfterPress, 2, true)
-        --     end
-        -- end
     end
     if PAD.IS_CONTROL_PRESSED(0, 62) then --62 || INPUT_VEH_MOVE_DOWN_ONLY || LEFT CTRL / NUM5 (NOSE UP)
         local pitchAfterPress = vvPitch + 5
@@ -891,6 +1126,69 @@ function UpsideDownVehicleRotationWithKeys()
             ENTITY.SET_ENTITY_ROTATION(veh, pitchAfterPress, 179.9, vvYaw)
         end
     end
+    v3.free(vv)
+end
+
+function FastTurnVehicleWithKeys(scale)
+    local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
+    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    local velocity = ENTITY.GET_ENTITY_SPEED_VECTOR(veh, true).y
+    --Pitch: X || Roll: y || Yaw: z
+    local vvPitch = v3.getX(vv)
+    local vvRoll = v3.getY(vv)
+    local vvYaw = v3.getZ(vv)
+    if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
+
+        if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+            local yawAfterPress = vvYaw + scale
+            if yawAfterPress > 180 then -- check for overflow
+                local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
+                local toSetYaw = overFlowNeg + scale
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, toSetYaw, 2, true)
+            else --if not overflow
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
+            end
+
+        else --if not, then we do opposite turning logic.
+
+            local yawAfterPress = vvYaw - scale
+            if yawAfterPress < -180 then -- check for overflow
+                local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
+                local toSetYaw = overFlowNeg - scale
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, toSetYaw, 2, true)
+            else --if not overflow
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
+            end
+        end
+
+    end
+
+    if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
+
+        if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+        local yawAfterPress = vvYaw - scale
+        if yawAfterPress < -180 then -- check for overflow
+            local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
+            local toSetYaw = overFlowNeg - scale
+            ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, toSetYaw, 2, true)
+        else --if not overflow
+            ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
+        end
+
+        else --if not, then we do opposite turning logic.
+
+            local yawAfterPress = vvYaw + scale
+            if yawAfterPress > 180 then -- check for overflow
+                local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
+                local toSetYaw = overFlowNeg + scale
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, toSetYaw, 2, true)
+            else --if not overflow
+                ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
+            end
+        end
+
+    end
+    v3.free(vv)
 end
 
 function UnlockVehicleShoot()
@@ -930,6 +1228,7 @@ function UnlockVehicleShoot()
                 end
                 if not NETWORK.NETWORK_HAS_CONTROL_OF_ENTITY(entity) then
                     util.toast("Waited 2 secs, couldn't get control!")
+                    memory.free(pointer)
                     goto start
                 else
                     if SE_Notifications then
@@ -942,6 +1241,7 @@ function UnlockVehicleShoot()
                 VEHICLE.SET_VEHICLE_HAS_BEEN_OWNED_BY_PLAYER(veh, false)
             end
         end
+        memory.free(pointer)
     end
 end
 
@@ -992,5 +1292,121 @@ function TurnCarOnInstantly()
         if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 then --15 is heli
             VEHICLE.SET_HELI_BLADES_FULL_SPEED(veh)
         end
+    end
+end
+
+function PlaceWallInFrontOfPlayer(pid)
+    local ped = getPlayerPed(pid)
+    local forwardOffset = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ped, 0, 4, 0)
+    local pheading = ENTITY.GET_ENTITY_HEADING(ped)
+    local hash = 309416120
+    requestModel(hash)
+    while not hasModelLoaded(hash) do wait() end
+    local a1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z - 1, true, true, true)
+    ENTITY.SET_ENTITY_HEADING(a1, pheading + 90)
+    FastNet(a1, pid)
+    local b1 = OBJECT.CREATE_OBJECT(hash, forwardOffset.x, forwardOffset.y, forwardOffset.z + 1, true, true, true)
+    ENTITY.SET_ENTITY_HEADING(b1, pheading + 90)
+    FastNet(b1, pid)
+    wait(500)
+    entities.delete_by_handle(a1)
+    entities.delete_by_handle(b1)
+end
+
+function DropVehicleOnPlayer(pid, name, invis)
+    local ped = getPlayerPed(pid)
+    local pc = getEntityCoords(ped)
+    local hash = joaat(name)
+    requestModel(hash)
+    while not hasModelLoaded(hash) do wait() end
+    local ourveh = VEHICLE.CREATE_VEHICLE(hash, pc.x, pc.y, pc.z + 5, 0, true, true, false)
+    if invis then
+        ENTITY.SET_ENTITY_VISIBLE(ourveh, false, 0)
+    end
+    noNeedModel(hash)
+    wait(1200)
+    entities.delete_by_handle(ourveh)
+end
+
+function TeleportPlayersVehicleToOcean(pid)
+    local ped = getPlayerPed(pid)
+    local pc = getEntityCoords(ped)
+    local oldcoords = getEntityCoords(GetLocalPed())
+    for o = 0, 10 do
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pc.x, pc.y, pc.z + 10, false, false, false)
+        wait(50)
+    end
+    if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+        local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+        for a = 0, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, 4500, -4400, 4, false, false, false)
+            wait(100)
+        end
+        if SE_Notifications then
+            util.toast("Teleported " .. GetPlayerName_pid(pid) .. " into the farthest ocean!")
+        end
+    else
+        util.toast("Player " .. GetPlayerName_pid(pid) .. " is not in a vehicle!")
+    end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+end
+
+function TeleportPlayersVehicleToMazeBank(pid)
+    local ped = getPlayerPed(pid)
+    local pc = getEntityCoords(ped)
+    local oldcoords = getEntityCoords(GetLocalPed())
+    for o = 0, 10 do
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), pc.x, pc.y, pc.z + 10, false, false, false)
+        wait(50)
+    end
+    if PED.IS_PED_IN_ANY_VEHICLE(ped, false) then
+        local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false) 
+        for a = 0, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, -76, -819, 327, false, false, false)
+            wait(100)
+        end
+        if SE_Notifications then
+            util.toast("Teleported " .. GetPlayerName_pid(pid) .. " onto the Maze Bank tower!")
+        end
+    else
+        util.toast("Player " .. GetPlayerName_pid(pid) .. " is not in a vehicle!")
+    end
+    ENTITY.SET_ENTITY_COORDS_NO_OFFSET(GetLocalPed(), oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+end
+
+function FakeLagPlayerVehicle(pid)
+    local ped = getPlayerPed(pid)
+    if PED.IS_PED_IN_ANY_VEHICLE(ped) then
+        local veh = PED.GET_VEHICLE_PED_IS_IN(ped, false)
+        local velocity = ENTITY.GET_ENTITY_VELOCITY(veh)
+        local oldcoords = getEntityCoords(ped)
+        wait(500)
+        local nowcoords = getEntityCoords(ped)
+        for a = 1, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            wait()
+        end
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, oldcoords.x, oldcoords.y, oldcoords.z, false, false, false)
+        wait(200)
+        for b = 1, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            wait()
+        end
+        ENTITY.SET_ENTITY_VELOCITY(veh, velocity.x, velocity.y, velocity.z)
+        for c = 1, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            wait()
+        end
+        ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, nowcoords.x, nowcoords.y, nowcoords.z, false, false, false)
+        for d = 1, 10 do
+            NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+            wait()
+        end
+        ENTITY.SET_ENTITY_VELOCITY(veh, velocity.x, velocity.y, velocity.z)
+        wait(500)
+    else
+        util.toast("Player " .. GetPlayerName_pid(pid) .. " is not in a vehicle!")
     end
 end
