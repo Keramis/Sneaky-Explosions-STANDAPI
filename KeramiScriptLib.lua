@@ -64,7 +64,19 @@ function GetTableFromV3Instance(v3int)
     return tbl
 end
 
+function DoesTableContainValue(table, value)
+    for _, v in pairs(table) do
+        if v == value then return true end
+    end
+    return false
+end
 
+function GetValueIndexFromTable(table, value)
+    for i, v in pairs(table) do
+        if v == value then return i end
+    end
+    return nil
+end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISC FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
@@ -424,6 +436,47 @@ function GetClosestPlayerWithRange_Whitelist(range) --variation of getClosestPla
     end
 end
 
+function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedEntities) --variation of GetClosestPlayerWithRange_Whitelist, that makes entities not returned if they are in the table.
+    local pedPointers = entities.get_all_peds_as_pointers()
+    local rangesq = range * range
+    local ourCoords = getEntityCoords(GetLocalPed())
+    local tbl = {}
+    local closest_player = 0
+    for i = 1, #pedPointers do
+        local tarcoords = entities.get_position(pedPointers[i])
+        local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+        if vdist <= rangesq then
+            local handle = entities.pointer_to_handle(pedPointers[i])
+            local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
+            if not AIM_WHITELIST[playerID] then --this is the whitelist check.
+                if not DoesTableContainValue(disallowedEntities, handle) then --this is the disallowed entities table check
+                    tbl[#tbl+1] = handle
+                end
+            end
+        end
+    end
+    if tbl ~= nil then
+        local dist = 999999
+        for i = 1, #tbl do
+            if tbl[i] ~= GetLocalPed() then
+                if PED.IS_PED_A_PLAYER(tbl[i]) then
+                    local tarcoords = getEntityCoords(tbl[i])
+                    local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+                    if e < dist then
+                        dist = e
+                        closest_player = tbl[i]
+                    end
+                end
+            end
+        end
+    end
+    if closest_player ~= 0 then
+        return closest_player
+    else
+        return nil
+    end
+end
+
 function GetClosestNonPlayerPedWithRange(range)
     local pedPointers = entities.get_all_peds_as_pointers()
     local rangesq = range * range
@@ -435,6 +488,44 @@ function GetClosestNonPlayerPedWithRange(range)
         local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
         if vdist <= rangesq then
             tbl[#tbl+1] = entities.pointer_to_handle(pedPointers[i])
+        end
+    end
+    if tbl ~= nil then
+        local dist = 999999
+        for i = 1, #tbl do
+            if tbl[i] ~= GetLocalPed() then
+                if not PED.IS_PED_A_PLAYER(tbl[i]) then
+                    local tarcoords = getEntityCoords(tbl[i])
+                    local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+                    if e < dist then
+                        dist = e
+                        closest_ped = tbl[i]
+                    end
+                end
+            end
+        end
+    end
+    if closest_ped ~= 0 then
+        return closest_ped
+    else
+        return nil
+    end
+end
+
+function GetClosestNonPlayerPedWithRange_DisallowedEntities(range, disallowedEntities) --modified version of GetClosestNonPlayerPedWithRange that takes a table of disallowed entities (blacklisted peds)
+    local pedPointers = entities.get_all_peds_as_pointers()
+    local rangesq = range * range
+    local ourCoords = getEntityCoords(GetLocalPed())
+    local tbl = {}
+    local closest_ped = 0
+    for i = 1, #pedPointers do
+        local tarcoords = entities.get_position(pedPointers[i])
+        local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+        if vdist <= rangesq then
+            local handle = entities.pointer_to_handle(pedPointers[i])
+            if not DoesTableContainValue(disallowedEntities, handle) then
+                tbl[#tbl+1] = handle
+            end
         end
     end
     if tbl ~= nil then
@@ -1037,6 +1128,20 @@ function CheckLobbyForGodmode()
     util.toast(godcount .. " people in godmode!")
 end
 
+local join_ing = false
+function CheckLobbyForPlayers()
+    local buffer = join_ing
+    join_ing = NETWORK.NETWORK_IS_SESSION_STARTED()
+    wait(2000)
+    local playersTable = players.list()
+    if buffer ~= join_ing then
+        for i = 1, 100 do
+            util.toast("Players in session: " .. #playersTable)
+            util.yield(10)
+        end
+    end
+end
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- OTHER LOBBY FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MISSILE SPEED FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
@@ -1139,7 +1244,8 @@ function FastTurnVehicleWithKeys(scale)
     local vvYaw = v3.getZ(vv)
     if PAD.IS_CONTROL_PRESSED(0, 63) then --63 || INPUT_VEH_MOVE_LEFT_ONLY || A
 
-        if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+        --OLD LOGIC || if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+        if PAD.IS_CONTROL_PRESSED(0, 71) or velocity > -0.1 then
             local yawAfterPress = vvYaw + scale
             if yawAfterPress > 180 then -- check for overflow
                 local overFlowNeg = math.abs(vvYaw)*-1 --negative bypass overflow
@@ -1149,7 +1255,7 @@ function FastTurnVehicleWithKeys(scale)
                 ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
             end
 
-        else --if not, then we do opposite turning logic.
+        elseif PAD.IS_CONTROL_PRESSED(0, 72) or velocity < -0.1 then --if not, then we do opposite turning logic.
 
             local yawAfterPress = vvYaw - scale
             if yawAfterPress < -180 then -- check for overflow
@@ -1165,7 +1271,8 @@ function FastTurnVehicleWithKeys(scale)
 
     if PAD.IS_CONTROL_PRESSED(0, 64) then --64 ||INPUT_VEH_MOVE_RIGHT_ONLY || D
 
-        if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+        --OLD LOGIC || if velocity > 0 then --if velocity is greater than 0, we do usual turning logic.
+        if PAD.IS_CONTROL_PRESSED(0, 71) or velocity > -0.1 then
         local yawAfterPress = vvYaw - scale
         if yawAfterPress < -180 then -- check for overflow
             local overFlowNeg = math.abs(vvYaw) --positive bypass overflow
@@ -1175,7 +1282,7 @@ function FastTurnVehicleWithKeys(scale)
             ENTITY.SET_ENTITY_ROTATION(veh, vvPitch, vvRoll, yawAfterPress, 2, true)
         end
 
-        else --if not, then we do opposite turning logic.
+        elseif PAD.IS_CONTROL_PRESSED(0, 72) or velocity < -0.1 then --if not, then we do opposite turning logic.
 
             local yawAfterPress = vvYaw + scale
             if yawAfterPress > 180 then -- check for overflow
