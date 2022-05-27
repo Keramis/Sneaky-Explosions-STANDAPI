@@ -661,18 +661,24 @@ VEH_MISSILE_SPEED = 10000
 menuToggleLoop(pvphelp, KER_LANG_TABLE[62], {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
     local p = GetClosestPlayerWithRange_Whitelist(200)
     local localped = GetLocalPed()
-    local localCoords = getEntityCoords(localped)
+    local localcoords2 = v3.new(getEntityCoords(localped))
     if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)] and (not players.is_in_interior(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p))) and (not players.is_godmode(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p))) then
         if PED.IS_PED_IN_ANY_VEHICLE(localped) then
             local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
             if VEHICLE.GET_VEHICLE_CLASS(veh) == 15 or VEHICLE.GET_VEHICLE_CLASS(veh) == 16 then --vehicle class of heli
                 --did all prechecks, time to actually face them
-                local pcoords = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
-                local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
+                -- local pcoords = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
+                -- local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
+                local pcoords2 = v3.new(PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0))
+                local look2 = v3.lookAt(localcoords2, pcoords2)
+                local look = GetTableFromV3Instance(look2)
                 ENTITY.SET_ENTITY_ROTATION(veh, look.x, look.y, look.z, 1, true)
+                v3.free(pcoords2)
+                v3.free(look2)
             end
         end
     end
+    v3.free(localcoords2)
 end)
 
 menuAction(pvphelp, KER_LANG_TABLE[63], {}, "Thank you so much Nowiry for this.", function ()
@@ -809,6 +815,10 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                             local look = GetTableFromV3Instance(look2)
                             local dir2 = v3.toDir(look2)
                             local dir = GetTableFromV3Instance(dir2)
+                            v3.free(lc2)
+                            v3.free(look2)
+                            v3.free(dir2)
+                            v3.free(pcoords2)
                             --didn't wanna make new fuckin variables/replace old ones, so we're multiplying the code by 2 because fuck you.
                             -- // -- // --
                             -- // -- // --
