@@ -700,6 +700,7 @@ local missile_settings = {
     los = true,
     cam = false,
     ptfx = true,
+    ptfx_scale = 1,
     multitarget = false,
     multiped = false
 }
@@ -728,6 +729,7 @@ Rocket_Hashes = {
     {"b11barrage", util.joaat("w_smug_airmissile_01b")},
     {"b11regular", util.joaat("w_battle_airmissile_01")},
     {"grenadelauncher", util.joaat("w_lr_40mm")}, --grenade launcher lmfao
+    {"compactemplauncher", util.joaat("w_lr_ml_40mm")}, --compact emp launhcer lmao
     {"teargas", util.joaat("w_ex_grenadesmoke")} --tear gas grenade lmfao
 }
 
@@ -791,11 +793,23 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                             if SE_Notifications then
                                 util.toast("rocket exists")
                             end
-                            local pcoords = PED.GET_PED_BONE_COORDS(plocalized, 20781, 0, 0, 0)
-                            local lc = getEntityCoords(msl)
+                            -- OLD CODE, FOR REFERENCE::
+                            -- local pcoords = PED.GET_PED_BONE_COORDS(plocalized, 20781, 0, 0, 0)
+                            -- local lc = getEntityCoords(msl)
                             
-                            local look = util.v3_look_at(lc, pcoords)
-                            local dir = util.rot_to_dir(look)
+                            -- local look = util.v3_look_at(lc, pcoords)
+                            -- local dir = util.rot_to_dir(look)
+
+                            -- NEW CODE W/O DEPRECATION:
+                            local pcoords2 = v3.new(PED.GET_PED_BONE_COORDS(plocalized, 20781, 0, 0, 0))
+                            local pcoords = GetTableFromV3Instance(pcoords2)
+                            local lc2 = v3.new(getEntityCoords(msl))
+                            local lc = GetTableFromV3Instance(lc2)
+                            local look2 = v3.lookAt(lc2, pcoords2)
+                            local look = GetTableFromV3Instance(look2)
+                            local dir2 = v3.toDir(look2)
+                            local dir = GetTableFromV3Instance(dir2)
+                            --didn't wanna make new fuckin variables/replace old ones, so we're multiplying the code by 2 because fuck you.
                             -- // -- // --
                             -- // -- // --
                             if missile_settings.ptfx then
@@ -807,7 +821,7 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                                 GRAPHICS.USE_PARTICLE_FX_ASSET(missile_particles.dictionary)
                                 -- > -- we now have loaded our PTFX for our fake rocket.
                                 --(​const char* effectName, float xPos, float yPos, float zPos, float xRot, float yRot, float zRot, float scale, BOOL xAxis, BOOL yAxis, BOOL zAxis, BOOL p11)
-                                GRAPHICS.START_NETWORKED_PARTICLE_FX_NON_LOOPED_AT_COORD(missile_particles.name, lc.x, lc.y, lc.z, 0, 0, 0, 0.4, false, false, false, true)
+                                GRAPHICS.START_NETWORKED_PARTICLE_FX_NON_LOOPED_AT_COORD(missile_particles.name, lc.x, lc.y, lc.z, 0, 0, 0, 0.4 * missile_settings.ptfx_scale, false, false, false, true)
                             end
                             -- // -- // --
                             -- // -- // --
@@ -942,6 +956,10 @@ menuToggle(rpgsettings, "Target Peds (MULTI-TARGET)", {}, "Will target peds inst
 end)
 
 menu.divider(rpgsettings, "------- PTFX (ADVANCED) -------")
+
+menu.slider(rpgsettings, "PTFX Scale", {"rpgparscale"}, "Scale for the particle effects.", 1, 10, 1, 1, function (scale)
+    missile_settings.ptfx_scale = scale
+end)
 
 menu.text_input(rpgsettings, "PTFX Name", {"rpgptfx"}, "Particle effects name. ADVANCED USERS ONLY.", function (text)
     missile_particles.name = text
@@ -1440,7 +1458,7 @@ local upboost = {
 menuAction(vehicleFeats, "Small Boost Up", {"smallupboost"}, "Does a small little boost up, for jumps :)", function ()
     local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
     if veh ~= 0 then
-        ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(veh, 1, 0, 0, 10 * upboost.multiplier, true, true, true, true)
+        ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(veh, 1, 0, 0, 2 * upboost.multiplier, true, true, true, true)
     else
         util.toast("Not in a vehicle!")
     end
