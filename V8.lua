@@ -1147,6 +1147,18 @@ menuToggleLoop(toolFeats, KER_LANG_TABLE[90], {"drawpos"},  "", function ()
     directx.draw_text(0.0, 0.0, "x: " .. pos.x .. " // y: " .. pos.y .. " // z: " .. pos.z, ALIGN_TOP_LEFT, DR_TXT_SCALE, cc, false)
 end)
 
+menuToggleLoop(toolFeats, "Draw Rotation", {"drawrot"}, "", function ()
+    local rot = ENTITY.GET_ENTITY_ROTATION(GetLocalPed(), 2)
+    local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
+    directx.draw_text(0.5, 0.03, "pitch: " .. rot.x .. " // roll: " .. rot.y .. " // yaw: " .. rot.z, ALIGN_CENTRE, DR_TXT_SCALE, cc, false)
+    local facingtowards
+    if ((rot.z >= 135) or (rot.z < -135)) then facingtowards = "-Y" end
+    if ((rot.z < 135) and (rot.z >= 45)) then facingtowards = "-X" end
+    if ((rot.z >= -135) and (rot.z < -45)) then facingtowards = "+X" end
+    --if (rot.z > -45)
+    directx.draw_text(0.5, 0.03, "Facing towards ", ALIGN_CENTRE, DR_TXT_SCALE, cc, false)
+end)
+
 --preload
 EP_drawveh = true
 EP_drawped = true
@@ -1582,8 +1594,7 @@ end)
 --------------------------------------------------------------------------------------------------------------------------
 
 local helperFeatures = menu.list(menuroot, "Helpers", {}, "")
--- add custom "merryweather" protection here
--- aimbot the fucking peds LMFAO
+
 menuAction(helperFeatures, "Teleport safe codes", {}, "Teleports the safe codes in the Agency missions (tequi-la-la)", function()
     local objTable = entities.get_all_objects_as_pointers()
     local lookingFor = 367638847 -- || 0x15E9B93F || sf_prop_sf_codes_01a || HEXtoDECIMAL
