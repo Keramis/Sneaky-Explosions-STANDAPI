@@ -1582,7 +1582,8 @@ end)
 --------------------------------------------------------------------------------------------------------------------------
 
 local helperFeatures = menu.list(menuroot, "Helpers", {}, "")
-
+-- add custom "merryweather" protection here
+-- aimbot the fucking peds LMFAO
 menuAction(helperFeatures, "Teleport safe codes", {}, "Teleports the safe codes in the Agency missions (tequi-la-la)", function()
     local objTable = entities.get_all_objects_as_pointers()
     local lookingFor = 367638847 -- || 0x15E9B93F || sf_prop_sf_codes_01a || HEXtoDECIMAL
