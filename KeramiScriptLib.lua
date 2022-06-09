@@ -22,6 +22,10 @@ function GetLocalPed()
     return PLAYER.PLAYER_PED_ID()
 end
 
+function ToastCoordinates(v3coords)
+    util.toast(v3coords.x .. " || " .. v3coords.y .. " || " .. v3coords.z)
+end
+
 function SE_add_explosion(x, y, z, exptype, dmgscale, isheard, isinvis, camshake, nodmg)
     FIRE.ADD_EXPLOSION(x, y, z, exptype, dmgscale, isheard, isinvis, camshake, nodmg)
 end
@@ -434,6 +438,48 @@ function GetClosestPlayerWithRange_Whitelist(range) --variation of getClosestPla
     else
         return nil
     end
+end
+
+function GetSuitableSilentAimbotPlayer(range, LOScheck, FOV) --gets a suitable silent aimbot player.
+    --this function has all the checks inside of it, so that players who are valid don't get filtered out.
+    --and the players that are not valid stop the players who are.
+    local pedpointers = entities.get_all_objects_as_pointers()
+    local rangesq = range * range
+    local ourCoords = getEntityCoords(GetLocalPed())
+    local tbl = {}
+    local suitable_player = 0
+    for _, ped in pairs(pedpointers) do
+        local targetCoords = entities.get_position(ped)
+        local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, targetCoords.x, targetCoords.y, targetCoords.z)
+        if vdist <= rangesq then --range check
+            local handle = entities.pointer_to_handle(ped)
+            if (PED.IS_PED_A_PLAYER(handle)) and (not PED.IS_PED_DEAD_OR_DYING(handle, 1)) then --player check, we don't want to target peds. || dead check, dont wanna target dead people.
+                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
+                if not AIM_WHITELIST[playerID] then --whitelist check.
+                    if ((ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(GetLocalPed(), handle, 17) and LOScheck) or (not LOScheck)) and (PED.IS_PED_FACING_PED(GetLocalPed(), handle, FOV)) then --line-of-sight check :)
+                        tbl[#tbl+1] = handle --finally add it to the table of suitable players.
+                    end
+                end
+            end
+        end
+    end
+    if tbl ~= nil then
+        local dist = 9999999999999
+        for _, v in pairs(tbl) do
+            if v ~= GetLocalPed() then
+                local tarcoords = getEntityCoords(v)
+                local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
+                if e < dist then
+                    dist = e
+                    suitable_player = v
+                end
+            end
+        end
+    end
+    util.toast("FOV: " .. tostring(FOV))
+    util.toast("LOSCHECK: " .. tostring(LOScheck))
+    util.toast("Range: " .. tostring(range))
+    if suitable_player ~= 0 then return suitable_player else return nil end
 end
 
 function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedEntities) --variation of GetClosestPlayerWithRange_Whitelist, that makes entities not returned if they are in the table.
@@ -1037,6 +1083,86 @@ function PlagueCrashPlayer(pid)
         end
 end
 
+function BadOutfitCrash(pid)
+    RqModel(0x705E61F2)
+    local pc = getEntityCoords(getPlayerPed(pid))
+    local ped = PED.CREATE_PED(26, 0x705E61F2, pc.x, pc.y, pc.z, 0, true, false)
+    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ped)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 0, 45, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 1, 197, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 2, 76, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 3, 196, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 4, 144, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 5, 99, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 6, 102, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 7, 151, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 8, 189, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 9, 56, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 10, 132, 0, 0)
+    PED.SET_PED_COMPONENT_VARIATION(ped, 11, 393, 0, 0)
+    wait(2000)
+    entities.delete_by_handle(ped)
+end
+function BadNetVehicleCrash(pid)
+    local hashes = {1492612435, 3517794615, 3889340782, 3253274834}
+    local vehicles = {}
+    for i = 1, 4 do
+        util.create_thread(function()
+            RqModel(hashes[i])
+            local pcoords = getEntityCoords(getPlayerPed(pid))
+            local veh =  VEHICLE.CREATE_VEHICLE(hashes[i], pcoords.x, pcoords.y, pcoords.z, math.random(0, 360), true, true, false)
+            for a = 1, 20 do NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh) end
+            VEHICLE.SET_VEHICLE_MOD_KIT(veh, 0)
+            for j = 0, 49 do
+                local mod = VEHICLE.GET_NUM_VEHICLE_MODS(veh, j) - 1
+                VEHICLE.SET_VEHICLE_MOD(veh, j, mod, true)
+                VEHICLE.TOGGLE_VEHICLE_MOD(veh, mod, true)
+            end
+            for j = 0, 20 do
+                if VEHICLE.DOES_EXTRA_EXIST(veh, j) then VEHICLE.SET_VEHICLE_EXTRA(veh, j, true) end
+            end
+            VEHICLE.SET_VEHICLE_TYRES_CAN_BURST(veh, false)
+            VEHICLE.SET_VEHICLE_WINDOW_TINT(veh, 1)
+            VEHICLE.SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(veh, 1)
+            VEHICLE.SET_VEHICLE_NUMBER_PLATE_TEXT(veh, " ")
+            for ai = 1, 50 do
+                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh)
+                pcoords = getEntityCoords(getPlayerPed(pid))
+                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(veh, pcoords.x, pcoords.y, pcoords.z, false, false, false)
+                util.yield()
+            end
+            vehicles[#vehicles+1] = veh
+        end)
+    end
+    wait(2000)
+    util.toast("finished.")
+    for _, v in pairs(vehicles) do
+        NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(v)
+        entities.delete_by_handle(v)
+    end
+end
+function RopeCrashLobby(pid)
+    PHYSICS.ROPE_LOAD_TEXTURES()
+    local hashes = {2132890591, 2727244247}
+    local pc = getEntityCoords(getPlayerPed(pid))
+    local veh = VEHICLE.CREATE_VEHICLE(hashes[i], pc.x + 5, pc.y, pc.z, 0, true, true, false)
+    local ped = PED.CREATE_PED(26, hashes[2], pc.x, pc.y, pc.z + 1, 0, true, false)
+    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh); NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ped)
+    ENTITY.SET_ENTITY_INVINCIBLE(ped, true)
+    ENTITY.SET_ENTITY_VISIBLE(ped, false, 0)
+    ENTITY.SET_ENTITY_VISIBLE(veh, false, 0)
+    local rope = PHYSICS.ADD_ROPE(pc.x + 5, pc.y, pc.z, 0, 0, 0, 1, 1, 0.0000000000000000000000000000000000001, 1, 1, true, true, true, 1, true, 0)
+    local vehc = getEntityCoords(veh); local pedc = getEntityCoords(ped)
+    PHYSICS.ATTACH_ENTITIES_TO_ROPE(rope, veh, ped, vehc.x, vehc.y, vehc.z, pedc.x, pedc.y, pedc.z, 2, 0, 0, "Center", "Center")
+    wait(1000)
+    NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh); NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ped)
+    entities.delete_by_handle(veh); entities.delete_by_handle(ped)
+    local ropeptr = memory.alloc(4)
+    ropeptr = memory.write_int(rope)
+    PHYSICS.DELETE_ROPE(ropeptr)
+    PHYSICS.ROPE_UNLOAD_TEXTURES()
+end
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOXIC FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 
@@ -1191,9 +1317,17 @@ end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- VEHICLE FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
+function GetClosestVehicleNodeWithHeading(x, y, z, nodeType)
+    local outpos = v3.new()
+    local outHeading = memory.alloc()
+    PATHFIND.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING(x, y, z, outpos, outHeading, nodeType, 3.0, 0)
+    local pos = GetTableFromV3Instance(outpos); local heading = memory.read_float(outHeading)
+    memory.free(outHeading); v3.free(outpos); return pos, heading
+end
+
 function UpsideDownVehicleRotationWithKeys()
     local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
-    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    local vv = ENTITY.GET_ENTITY_ROTATION(veh, 2)
     --Pitch: X || Roll: y || Yaw: z
     local vvPitch = v3.getX(vv)
     local vvRoll = v3.getY(vv)
@@ -1236,7 +1370,7 @@ end
 
 function FastTurnVehicleWithKeys(scale)
     local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
-    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    local vv = ENTITY.GET_ENTITY_ROTATION(veh, 2)
     local velocity = ENTITY.GET_ENTITY_SPEED_VECTOR(veh, true).y
     --Pitch: X || Roll: y || Yaw: z
     local vvPitch = v3.getX(vv)
@@ -1516,4 +1650,35 @@ function FakeLagPlayerVehicle(pid)
     else
         util.toast("Player " .. GetPlayerName_pid(pid) .. " is not in a vehicle!")
     end
+end
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- VEHICLE FEATURES END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- TOOL FEATURES START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
+
+local function tpTableToPlayer(tbl, pid)
+    if NETWORK.NETWORK_IS_PLAYER_CONNECTED(pid) then
+        local c = getEntityCoords(getPlayerPed(pid))
+        for _, v in pairs(tbl) do
+            if (not PED.IS_PED_A_PLAYER(v)) then
+                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(v, c.x, c.y, c.z, false, false, false)
+            end
+        end
+    end
+end
+function TpAllPeds(player)
+    local pedHandles = entities.get_all_peds_as_handles()
+    tpTableToPlayer(pedHandles, player)
+end
+function TpAllVehs(player)
+    local vehHandles = entities.get_all_vehicles_as_handles()
+    tpTableToPlayer(vehHandles, player)
+end
+function TpAllObjects(player)
+    local objHandles = entities.get_all_objects_as_handles()
+    tpTableToPlayer(objHandles, player)
+end
+function TpAllPickups(player)
+    local pickupHandles = entities.get_all_pickups_as_handles()
+    tpTableToPlayer(pickupHandles, player)
 end

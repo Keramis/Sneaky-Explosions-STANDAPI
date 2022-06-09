@@ -662,7 +662,7 @@ VEH_MISSILE_SPEED = 10000
 menuToggleLoop(pvphelp, KER_LANG_TABLE[62], {}, "Makes the heli aim at the closest player. Combine this with 'silent aimbot' for it to look like you're super good :)", function ()
     local p = GetClosestPlayerWithRange_Whitelist(200)
     local localped = GetLocalPed()
-    local localcoords2 = v3.new(getEntityCoords(localped))
+    local localcoords2 = getEntityCoords(localped)
     if p ~= nil and not PED.IS_PED_DEAD_OR_DYING(p) and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(localped, p, 17) and not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p)] and (not players.is_in_interior(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p))) and (not players.is_godmode(NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(p))) then
         if PED.IS_PED_IN_ANY_VEHICLE(localped) then
             local veh = PED.GET_VEHICLE_PED_IS_IN(localped, false)
@@ -670,16 +670,13 @@ menuToggleLoop(pvphelp, KER_LANG_TABLE[62], {}, "Makes the heli aim at the close
                 --did all prechecks, time to actually face them
                 -- local pcoords = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
                 -- local look = util.v3_look_at(localCoords, pcoords) --x = pitch (vertical), y = roll (fuck no), z = heading (horizontal)
-                local pcoords2 = v3.new(PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0))
+                local pcoords2 = PED.GET_PED_BONE_COORDS(p, 24817, 0, 0, 0)
                 local look2 = v3.lookAt(localcoords2, pcoords2)
                 local look = GetTableFromV3Instance(look2)
                 ENTITY.SET_ENTITY_ROTATION(veh, look.x, look.y, look.z, 1, true)
-                v3.free(pcoords2)
-                v3.free(look2)
             end
         end
     end
-    v3.free(localcoords2)
 end)
 
 menuAction(pvphelp, KER_LANG_TABLE[63], {}, "Thank you so much Nowiry for this.", function ()
@@ -801,9 +798,10 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                                 util.toast("rocket exists")
                             end
                             -- NEW CODE W/O DEPRECATION:
-                            local pcoords2 = v3.new(PED.GET_PED_BONE_COORDS(plocalized, 20781, 0, 0, 0))
+                            --local pcoords2 = v3.new(PED.GET_PED_BONE_COORDS(plocalized, 20781, 0, 0, 0))
+                            local pcoords2 = getEntityCoords(plocalized)
                             local pcoords = GetTableFromV3Instance(pcoords2)
-                            local lc2 = v3.new(getEntityCoords(msl))
+                            local lc2 = getEntityCoords(msl)
                             local lc = GetTableFromV3Instance(lc2)
                             local look2 = v3.lookAt(lc2, pcoords2)
                             local look = GetTableFromV3Instance(look2)
@@ -827,9 +825,12 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                             -- // -- // --
                             --airstrike air
                             if aircount < 2 and MISL_AIR then
-                                ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(msl, 1, 0, 0, 99990000, true, false, true, true)
-                                aircount = aircount + 1
-                                wait(1100)
+                                if ENTITY.DOES_ENTITY_EXIST(msl) then
+                                    --thanks ren!
+                                    ENTITY.APPLY_FORCE_TO_ENTITY_CENTER_OF_MASS(msl, 1, 0, 0, 2700, true, false, true, true)
+                                    aircount = aircount + 1
+                                    wait(1100)
+                                end
                             end
                             local lookCountD = 0
                             if MISL_AIR then
@@ -851,7 +852,7 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                                 if missile_settings.cam then
                                     local ddisst = SYSTEM.VDIST(pcoords.x, pcoords.y, pcoords.z, lc.x, lc.y, lc.z)
                                     if ddisst > 50 then
-                                        local camcoordv3 = v3.new(CAM.GET_CAM_COORD(Missile_Camera))
+                                        local camcoordv3 = CAM.GET_CAM_COORD(Missile_Camera)
                                         local look3 = v3.lookAt(camcoordv3, lc2)
                                         local look4 = GetTableFromV3Instance(look3)
                                         --local look2 = util.v3_look_at(CAM.GET_CAM_COORD(Missile_Camera), lc)
@@ -862,15 +863,11 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                                             CAM.SET_CAM_ROT(Missile_Camera, look4.x, look4.y, look4.z, 2)
                                             lookCountD = lookCountD + 1
                                         end
-                                        v3.free(camcoordv3)
-                                        v3.free(look3)
                                     else
-                                        local camcoordv3 = v3.new(CAM.GET_CAM_COORD(Missile_Camera))
+                                        local camcoordv3 = CAM.GET_CAM_COORD(Missile_Camera)
                                         local look3 = v3.lookAt(camcoordv3, lc2)
                                         local look4 = GetTableFromV3Instance(look3)
                                         CAM.SET_CAM_ROT(Missile_Camera, look4.x, look4.y, look4.z, 2)
-                                        v3.free(camcoordv3)
-                                        v3.free(look3)
                                     end
                                 end
                                 --CAM.SET_CAM_PARAMS(Missile_Camera, lc.x, lc.y, lc.z + 1, look.x, look.y, look.z, 100, 0, 0, 0, 0) --(​Cam cam, float posX, float posY, float posZ, float rotX, float rotY, float rotZ, float fieldOfView, Any p8, int p9, int p10, int p11)
@@ -884,10 +881,6 @@ menu.toggle(pvphelp, KER_LANG_TABLE[66], {"rpgaim"}, "More accurately, rocket ai
                                 wait()
                             end
                             --free all our v3 instances
-                            v3.free(lc2)
-                            v3.free(look2)
-                            v3.free(dir2)
-                            v3.free(pcoords2)
                         end
 
                         --rocket has stopped existing
@@ -1152,11 +1145,11 @@ menuToggleLoop(toolFeats, "Draw Rotation", {"drawrot"}, "", function ()
     local cc = {r = 1.0, g = 1.0, b = 1.0, a = 1.0}
     directx.draw_text(0.5, 0.03, "pitch: " .. rot.x .. " // roll: " .. rot.y .. " // yaw: " .. rot.z, ALIGN_CENTRE, DR_TXT_SCALE, cc, false)
     local facingtowards
-    if ((rot.z >= 135) or (rot.z < -135)) then facingtowards = "-Y" end
-    if ((rot.z < 135) and (rot.z >= 45)) then facingtowards = "-X" end
-    if ((rot.z >= -135) and (rot.z < -45)) then facingtowards = "+X" end
-    --if (rot.z > -45)
-    directx.draw_text(0.5, 0.03, "Facing towards ", ALIGN_CENTRE, DR_TXT_SCALE, cc, false)
+    if ((rot.z >= 135) or (rot.z < -135)) then facingtowards = "-Y"
+    elseif ((rot.z < 135) and (rot.z >= 45)) then facingtowards = "-X"
+    elseif ((rot.z >= -135) and (rot.z < -45)) then facingtowards = "+X"
+    elseif ((rot.z >= -45) or (rot.z < 45)) then facingtowards = "+Y" end
+    directx.draw_text(0.5, 0.07, "Facing towards " .. facingtowards, ALIGN_CENTRE, DR_TXT_SCALE, cc, false)
 end)
 
 --preload
@@ -1320,29 +1313,73 @@ menuToggle(toolFeats, KER_LANG_TABLE[112], {}, "", function (yoink)
         Yoinkshit = false
     end
 end)
-
 local yoinkSettings = menu.list(toolFeats, KER_LANG_TABLE[113], {}, "")
-
 menu.slider(yoinkSettings, KER_LANG_TABLE[114], {"yoinkrange"}, "", 1, 5000, 500, 10, function (value)
     YOINK_RANGE = value
 end)
-
 menuToggle(yoinkSettings, KER_LANG_TABLE[115], {}, "", function (peds)
     YOINK_PEDS = peds
 end)
-
 menuToggle(yoinkSettings, KER_LANG_TABLE[116], {}, "", function (vehs)
     YOINK_VEHICLES = vehs
 end)
-
 menuToggle(yoinkSettings, KER_LANG_TABLE[117], {}, "", function (objs)
     YOINK_OBJECTS = objs
 end)
-
 menuToggle(yoinkSettings, KER_LANG_TABLE[118], {}, "", function (pick)
     YOINK_PICKUPS = pick
 end)
 
+
+local tpyoink = menu.list(toolFeats, "TP All __ to Yourself", {}, "")
+
+menu.action(tpyoink, "TP All Peds", {}, "", function ()
+    TpAllPeds(players.user())
+end)
+menu.action(tpyoink, "TP All Vehicles", {}, "WARNING: DANGEROUS SHIT!", function()
+    TpAllVehs(players.user())
+end)
+menu.action(tpyoink, "TP All Objects", {}, "WARNING: BIG CHANCE YOU MIGHT CRASH!", function ()
+    TpAllObjects(players.user())
+end)
+menu.action(tpyoink, "TP All Pickups", {}, "", function ()
+    TpAllPickups(players.user())
+end)
+
+
+local clearAreaTools = menu.list(toolFeats, "Clear Area", {}, "")
+CLEAR_AREA_RANGE = 100
+local function clearAreaOfEntities(tbl, range)
+    local rangesq = range*range
+    local pc = ENTITY.GET_ENTITY_COORDS(GetLocalPed())
+    for _, v in pairs(tbl) do
+        local cc = entities.get_position(v)
+        if (SYSTEM.VDIST2(pc.x, pc.y, pc.z, cc.x, cc.y, cc.z) <= rangesq) then
+            local h = entities.pointer_to_handle(v)
+            for i = 0, 20 do NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(h) end
+            entities.delete_by_handle(h)
+        end
+    end
+end
+menu.action(clearAreaTools, "Clear Area of Peds", {}, "", function ()
+    local pp = entities.get_all_peds_as_pointers()
+    clearAreaOfEntities(pp, CLEAR_AREA_RANGE)
+end)
+menu.action(clearAreaTools, "Clear Area of Vehicles", {}, "", function ()
+    local vp = entities.get_all_vehicles_as_pointers()
+    clearAreaOfEntities(vp, CLEAR_AREA_RANGE)
+end)
+menu.action(clearAreaTools, "Clear Area of Objects", {}, "", function ()
+    local op = entities.get_all_objects_as_pointers()
+    clearAreaOfEntities(op, CLEAR_AREA_RANGE)
+end)
+menu.action(clearAreaTools, "Clear Area of Pickups", {}, "", function ()
+    local pp = entities.get_all_objects_as_pointers()
+    clearAreaOfEntities(pp, CLEAR_AREA_RANGE)
+end)
+menu.slider(clearAreaTools, "Clear Area Range", {"cleararearange"}, "", 1, 10000, 100, 50, function (value)
+    CLEAR_AREA_RANGE = value
+end)
 --------------------------------------------------------------------------------------------------------------------------
 
 local vehicleFeats = menu.list(menuroot, KER_LANG_TABLE[119], {"vehicleFeats"}, "")
@@ -1351,7 +1388,7 @@ menu.divider(vehicleFeats, KER_LANG_TABLE[120])
 
 menuToggleLoop(vehicleFeats, KER_LANG_TABLE[121], {}, "", function()
     local veh = PED.GET_VEHICLE_PED_IS_IN(GetLocalPed(), false)
-    local vv = v3.new(ENTITY.GET_ENTITY_ROTATION(veh, 2))
+    local vv = ENTITY.GET_ENTITY_ROTATION(veh, 2)
     local velMag = ENTITY.GET_ENTITY_SPEED_VECTOR(veh, true).y
     --[[
         x = left/right
@@ -1595,7 +1632,7 @@ end)
 
 local helperFeatures = menu.list(menuroot, "Helpers", {}, "")
 
-menuAction(helperFeatures, "Teleport safe codes", {}, "Teleports the safe codes in the Agency missions (tequi-la-la)", function()
+menuAction(helperFeatures, "Teleport safe codes", {}, "Teleports the safe codes in the Agency missions (tequi-la-la, stripclub)", function()
     local objTable = entities.get_all_objects_as_pointers()
     local lookingFor = 367638847 -- || 0x15E9B93F || sf_prop_sf_codes_01a || HEXtoDECIMAL
     for i = 1, #objTable do
@@ -1608,23 +1645,36 @@ menuAction(helperFeatures, "Teleport safe codes", {}, "Teleports the safe codes 
     end
 end)
 
+--1: building
+--2: vehicle
+--3: simplePed
+--4: precisePed
+--5: objects
+-- this is for raycasting (FLAGS)
+
+-- menu.toggle(helperFeatures, "Anti-Aim", {"keramiaa"}, "CSGO TYPE BEAT.", function (on)
+--     local anti_aim = on
+--     while anti_aim do
+        
+--     end
+-- end)
+
 --------------------------------------------------------------------------------------------------------------------------
 
-local editGun = menu.list(menuroot, "Edit Gun", {}, "")
-local edit_gun = {
-    e1 = 0,
-    e2 = 0,
+local editGuns = menu.list(menuroot, "Attach Guns", {}, "")
+
+local attachGun = menu.list(editGuns, "Attach Gun (Not physical)", {}, "Settings for an attach gun, ATTACH_ENTITY_TO_ENTITY. Not physical.")
+local attach_gun = {
+    e1 = 0, e2 = 0,
     bone = 0,
     px = 0, py = 0, pz = 0,
     rx = 0, ry = 0, rz = 0,
     softPinning = false, collision = false,
     vertexIndex = 0, fixedRot = true
 }
--- Notes:
--- Entities attaching to the (0) position have virtually no offseet (10^-6 offset)
--- camera rotation to direction, shapetest
-menu.toggle_loop(editGun, "Edit Gun (2t1)", {"editgun"}, "A 2take1-inspired edit gun.", function ()
-    if edit_gun.e1 == 0 then util.draw_debug_text("Handle1") elseif edit_gun.e2 == 0 then util.draw_debug_text("Handle2") end
+menu.divider(attachGun, "Attach Gun")
+menu.toggle_loop(attachGun, "Attach Gun", {"attachgun"}, "Attach entity to entity (no peds).", function ()
+    if attach_gun.e1 == 0 then util.draw_debug_text("Handle1") elseif attach_gun.e2 == 0 then util.draw_debug_text("Handle2") end
     if PLAYER.IS_PLAYER_FREE_AIMING(players.user()) then
         if PAD.IS_CONTROL_JUST_PRESSED(0, 54) then -- 54 || INPUT_WEAPON_SPECIAL_TWO || E
             local entpointer = memory.alloc()
@@ -1632,23 +1682,25 @@ menu.toggle_loop(editGun, "Edit Gun (2t1)", {"editgun"}, "A 2take1-inspired edit
             if PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), entpointer) then
                 local handle = memory.read_int(entpointer)
                 if ENTITY.IS_ENTITY_A_PED(handle) then handle = PED.GET_VEHICLE_PED_IS_IN(handle, false) end
-                if edit_gun.e1 == 0 then
-                    edit_gun.e1 = handle
+                if attach_gun.e1 == 0 then
+                    attach_gun.e1 = handle
                     ENTITY.SET_ENTITY_AS_MISSION_ENTITY(handle)
-                elseif edit_gun.e2 == 0 then
-                    edit_gun.e2 = handle
-                    ENTITY.SET_ENTITY_AS_MISSION_ENTITY(handle)
-                    ---- --- -- ---
-                    util.toast("Attachment Done!")
-                    --attachments here
-                    local en1 = edit_gun.e1
-                    local en2 = edit_gun.e2
-                    --(entity1, entity2, boneIndex, xPos, yPos, zPos, xRot, yRot, zRot, p9, useSoftPinning, collision, isPed, vertexIndex, fixedRot)
-                    ENTITY.ATTACH_ENTITY_TO_ENTITY(en1, en2, edit_gun.bone, edit_gun.px, edit_gun.py, edit_gun.pz, edit_gun.rx, edit_gun.ry, edit_gun.rz, false,
-                    edit_gun.softPinning, edit_gun.collision, false, edit_gun.vertexIndex, edit_gun.fixedRot)
-                    --clear edit gun memory
-                    edit_gun.e1 = 0
-                    edit_gun.e2 = 0
+                elseif attach_gun.e2 == 0 then
+                    if attach_gun.e1 == handle then util.toast("Can't have the same entity!") else
+                        attach_gun.e2 = handle
+                        ENTITY.SET_ENTITY_AS_MISSION_ENTITY(handle)
+                        ---- --- -- ---
+                        util.toast("Attachment Done!")
+                        --attachments here
+                        local en1 = attach_gun.e1
+                        local en2 = attach_gun.e2
+                        --(entity1, entity2, boneIndex, xPos, yPos, zPos, xRot, yRot, zRot, p9, useSoftPinning, collision, isPed, vertexIndex, fixedRot)
+                        ENTITY.ATTACH_ENTITY_TO_ENTITY(en1, en2, attach_gun.bone, attach_gun.px, attach_gun.py, attach_gun.pz, attach_gun.rx, attach_gun.ry, attach_gun.rz, false,
+                        attach_gun.softPinning, attach_gun.collision, false, attach_gun.vertexIndex, attach_gun.fixedRot)
+                        --clear edit gun memory
+                        attach_gun.e1 = 0
+                        attach_gun.e2 = 0
+                    end
                 end
             end
             util.toast("Freed memory.")
@@ -1657,6 +1709,73 @@ menu.toggle_loop(editGun, "Edit Gun (2t1)", {"editgun"}, "A 2take1-inspired edit
     end
 end)
 
+menu.divider(attachGun, "Settings")
+menu.slider(attachGun, "Bone Index", {"attachGunbone"}, "Bone index of attach gun. Advanced users only!", -100000, 100000, 0, 1, function(value) attach_gun.bone = value end)
+menu.slider(attachGun, "X Offset", {"attachGunxoffset"}, "", -10000, 10000, 0, 100, function (value) attach_gun.px = value/100 end);menu.slider(attachGun, "Y Offset", {"attachGunyoffset"}, "", -10000, 10000, 0, 100, function (value) attach_gun.py = value/100 end);menu.slider(attachGun, "Z Offset", {"attachGunzoffset"}, "", -10000, 10000, 0, 100, function (value) attach_gun.pz = value/100 end)
+menu.slider(attachGun, "X Rotation", {"attachGunrotx"}, "", -360, 360, 0, 10, function (value) attach_gun.rx = value end); menu.slider(attachGun, "Y Rotation", {"attachGunroty"}, "", -360, 360, 0, 10, function (value) attach_gun.ry = value end); menu.slider(attachGun, "Z Rotation", {"attachGunrotz"}, "", -360, 360, 0, 10, function (value) attach_gun.rz = value end)
+menu.toggle(attachGun, "Soft Pinning", {"attachGunsoftpinning"}, "If set to false, attach entity will not detach when fixed.", function (toggle) attach_gun.softPinning = toggle end)
+menu.toggle(attachGun, "Collision", {"attachGuncollision"}, "Controls collision between two entities. FALSE disables collision.", function (toggle) attach_gun.collision = toggle end)
+menu.slider(attachGun, "Vertex Index", {"attachGunvertex"}, "ADVANCED USERS ONLY! Position of vertex.", -100000, 100000, 0, 1, function (value) attach_gun.vertexIndex = value end)
+menu.toggle(attachGun, "Fixed Rotation", {"attachGunfixedrot"}, "If false, ignores entity vector.", function (toggle) attach_gun.fixedRot = toggle end, true)
+
+
+local p_AttachGun = menu.list(editGuns, "Attach Gun (Physical)", {}, "Attach gun that uses ATTACH_ENTITY_TO_ENTITY_PHYSICALLY, making entites have collision with each other.")
+local p_attach_gun = {
+    e1 = 0, e2 = 0,
+    bone1 = 0, bone2 = 0,
+    px1 = 0, py1 = 0, pz1 = 0,
+    px2 = 0, py2 = 0, pz2 = 0,
+    rx = 0, ry = 0, rz = 0,
+    breakforce = 200, fixedRot = true,
+    collision = true, dontTPToBone = true,
+}
+menu.divider(p_AttachGun, "Attach Gun (Physical)")
+menu.toggle_loop(p_AttachGun, "Attach Gun (Physical)", {"pattachgun"}, "Attach entity to entity (no peds), physically.", function ()
+    if p_attach_gun.e1 == 0 then util.draw_debug_text("Handle1") elseif p_attach_gun.e2 == 0 then util.draw_debug_text("Handle2") end
+    if PLAYER.IS_PLAYER_FREE_AIMING(players.user()) then
+        if PAD.IS_CONTROL_JUST_PRESSED(0, 54) then -- 54 || INPUT_WEAPON_SPECIAL_TWO || E
+            local entpointer = memory.alloc()
+            util.toast("Allocated memory.")
+            if PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), entpointer) then
+                local handle = memory.read_int(entpointer)
+                if ENTITY.IS_ENTITY_A_PED(handle) then handle = PED.GET_VEHICLE_PED_IS_IN(handle, false) end
+                if p_attach_gun.e1 == 0 then
+                    p_attach_gun.e1 = handle
+                    ENTITY.SET_ENTITY_AS_MISSION_ENTITY(handle)
+                elseif p_attach_gun.e2 == 0 then
+                    if p_attach_gun.e1 == handle then util.toast("Can't have the same entity!") else
+                        p_attach_gun.e2 = handle
+                        ENTITY.SET_ENTITY_AS_MISSION_ENTITY(handle)
+                        ---- --- -- ---
+                        util.toast("Attachment Done!")
+                        --(​Entity entity1, Entity entity2, int boneIndex1, int boneIndex2, float xPos1, float yPos1, float zPos1, float xPos2, float yPos2, float zPos2,
+                        -- float xRot, float yRot, float zRot, float breakForce, BOOL fixedRot, BOOL p15, BOOL collision, BOOL p17, int p18)
+                        ENTITY.ATTACH_ENTITY_TO_ENTITY_PHYSICALLY(p_attach_gun.e1, p_attach_gun.e2,
+                        p_attach_gun.bone1, p_attach_gun.bone2,
+                        p_attach_gun.px1, p_attach_gun.py1, p_attach_gun.pz1, p_attach_gun.px2, p_attach_gun.py2, p_attach_gun.pz2,
+                        p_attach_gun.rx, p_attach_gun.ry, p_attach_gun.rz,
+                        p_attach_gun.breakforce, p_attach_gun.fixedRot, true, p_attach_gun.collision, p_attach_gun.dontTPToBone, 2)
+                        --clear edit gun memory
+                        p_attach_gun.e1 = 0
+                        p_attach_gun.e2 = 0
+                    end
+                end
+            end
+            util.toast("Freed memory.")
+            memory.free(entpointer)
+        end
+    end
+end)
+menu.divider(p_AttachGun, "Settings")
+menu.slider(p_AttachGun, "Bone Index 1", {"pattachbone1"}, "Advanced users only!", -100000, 100000, 0, 1, function (value) p_attach_gun.bone1 = value end) menu.slider(p_AttachGun, "Bone Index 2", {"pattachbone2"}, "Advanced users only!", -100000, 100000, 0, 1, function (value) p_attach_gun.bone2 = value end)
+menu.slider(p_AttachGun, "X Offset 1", {"pattachx1"}, "X Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.px1 = value/100 end) menu.slider(p_AttachGun, "Y Offset 1", {"pattachy1"}, "Y Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.py1 = value/100 end) menu.slider(p_AttachGun, "Z Offset 1", {"pattachz1"}, "Z Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.pz1 = value/100 end)
+menu.slider(p_AttachGun, "X Offset 2", {"pattachx2"}, "X Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.px2 = value/100 end) menu.slider(p_AttachGun, "Y Offset 2", {"pattachy2"}, "Y Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.py2 = value/100 end) menu.slider(p_AttachGun, "Z Offset 2", {"pattachz2"}, "Z Offset: Entity 1", -100000, 100000, 0, 100, function (value) p_attach_gun.pz2 = value/100 end)
+menu.slider(p_AttachGun, "X Rotation", {"pattachxrot"}, "", -360, 360, 0, 10, function (value) p_attach_gun.rx = value end) menu.slider(p_AttachGun, "Y Rotation", {"pattachyrot"}, "", -360, 360, 0, 10, function (value) p_attach_gun.ry = value end) menu.slider(p_AttachGun, "Z Rotation", {"pattachzrot"}, "", -360, 360, 0, 10, function (value) p_attach_gun.rz = value end)
+menu.slider(p_AttachGun, "Break Force", {"pattachbreakforce"}, "The amount of force needed to break the bond.", 0, 100000, 200, 100, function (value) p_attach_gun.breakforce = value end)
+menu.toggle(p_AttachGun, "Fixed Rotation", {"pattachfixedrot"}, "Fixed rotation between attached entities.", function (toggle) p_attach_gun.fixedRot = toggle end, true)
+menu.toggle(p_AttachGun, "Collision", {"pattachcollision"}, "FALSE disables collision between two entities.", function (toggle) p_attach_gun.collision = toggle end, true)
+menu.toggle(p_AttachGun, "Don't TP to Bone", {"pattachdonttptobone"}, "Do not teleport entity to be attached to the position of the bone index of the target entity.", function (toggle) p_attach_gun.dontTPToBone = toggle end, true)
+--WIP
 --------------------------------------------------------------------------------------------------------------------------
 
 menu.divider(menuroot, KER_LANG_TABLE[146])
@@ -1776,10 +1895,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     -----------------------------------------------------------------------------------------------------------------------------------
 
-
-
-
-
     menu.divider(playerOtherTrolling, KER_LANG_TABLE[171])
     local ptossf = menu.list(playerOtherTrolling, KER_LANG_TABLE[172], {}, "")
 
@@ -1791,28 +1906,52 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
 
     -----------------------------------
 
+    menu.divider(playerOtherTrolling, "Teleport Entities")
+    local pteleportEntities = menu.list(playerOtherTrolling, "Teleport Entities to Player", {}, "")
+    menu.action(pteleportEntities, "Dump All Peds on Player", {"dumppeds"}, "", function ()
+        TpAllPeds(pid)
+    end)
+    menu.action(pteleportEntities, "Dump All Vehicles on Player", {"dumpvehs"}, "", function ()
+        TpAllVehs(pid)
+    end)
+    menu.action(pteleportEntities, "Dump All Objects on Player", {"dumpobjs"}, "", function ()
+        TpAllObjects(pid)
+    end)
+    menu.action(pteleportEntities, "Dump All Pickups on Player", {"dumppickups"}, "", function ()
+        TpAllPickups(pid)
+    end)
+
+    -----------------------------------
+
     menu.divider(playerOtherTrolling, KER_LANG_TABLE[178])
     local ptoxic = menu.list(playerOtherTrolling, KER_LANG_TABLE[179], {}, "")
+
     -----------------------------------
 
     --DELDEL
     menuAction(ptoxic, KER_LANG_TABLE[180], {}, "", function ()
         util.trigger_script_event(1 << pid, {-446275082, pid, 0, 1, 0})
     end)
-
     menu.divider(ptoxic, KER_LANG_TABLE[181])
-
     menuAction(ptoxic, KER_LANG_TABLE[182], {"fdeath"}, "Freemode death on player.", function ()
         FreemodeDeathPlayer(pid)
     end)
-
     menuAction(ptoxic, KER_LANG_TABLE[183], {"aiok", "aiokick"}, "If 'slower, but better aio' is enabled in lobby features, then uses it here as well.", function ()
         AIOKickPlayer(pid)
     end)
-    
     menuAction(ptoxic, KER_LANG_TABLE[184], {"byeplague"}, "Works on very few menus, but works on legits.", function ()
         PlagueCrashPlayer(pid)
     end)
+    menu.action(ptoxic, "Bad Outfit Crash", {"badoutfit"}, "", function ()
+        BadOutfitCrash(pid)
+    end)
+    menu.action(ptoxic, "Bat Net Vehicle Crash", {"badnetveh"}, "", function ()
+        BadNetVehicleCrash(pid)
+    end)
+    menu.action(ptoxic, "Rope Crash LOBBY", {"badrope"}, "", function()
+        RopeCrashLobby(pid)
+    end)
+    -----------------------------------
 
     menu.divider(playerTools, KER_LANG_TABLE[185])
 
