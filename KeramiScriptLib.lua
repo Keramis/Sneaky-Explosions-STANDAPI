@@ -401,7 +401,7 @@ function GetClosestPlayerWithRange(range)
     end
 end
 
-function GetClosestPlayerWithRange_Whitelist(range) --variation of getClosestPlayerWithinRange to work with my whitelisting feature for silent aimbot
+function GetClosestPlayerWithRange_Whitelist(range, inair) --variation of getClosestPlayerWithinRange to work with my whitelisting feature for silent aimbot
     local pedPointers = entities.get_all_peds_as_pointers()
     local rangesq = range * range
     local ourCoords = getEntityCoords(GetLocalPed())
@@ -412,9 +412,11 @@ function GetClosestPlayerWithRange_Whitelist(range) --variation of getClosestPla
         local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
         if vdist <= rangesq then
             local handle = entities.pointer_to_handle(pedPointers[i])
-            local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
-            if not AIM_WHITELIST[playerID] then --this is the whitelist check.
-                tbl[#tbl+1] = handle
+            if (inair and (ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(handle) >= 9)) or (not inair) then --air check
+                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
+                if not AIM_WHITELIST[playerID] then --this is the whitelist check.
+                    tbl[#tbl+1] = handle
+                end
             end
         end
     end
@@ -440,49 +442,74 @@ function GetClosestPlayerWithRange_Whitelist(range) --variation of getClosestPla
     end
 end
 
-function GetSuitableSilentAimbotPlayer(range, LOScheck, FOV) --gets a suitable silent aimbot player.
-    --this function has all the checks inside of it, so that players who are valid don't get filtered out.
-    --and the players that are not valid stop the players who are.
-    local pedpointers = entities.get_all_objects_as_pointers()
-    local rangesq = range * range
-    local ourCoords = getEntityCoords(GetLocalPed())
-    local tbl = {}
-    local suitable_player = 0
-    for _, ped in pairs(pedpointers) do
-        local targetCoords = entities.get_position(ped)
-        local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, targetCoords.x, targetCoords.y, targetCoords.z)
-        if vdist <= rangesq then --range check
-            local handle = entities.pointer_to_handle(ped)
-            if (PED.IS_PED_A_PLAYER(handle)) and (not PED.IS_PED_DEAD_OR_DYING(handle, 1)) then --player check, we don't want to target peds. || dead check, dont wanna target dead people.
-                local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
-                if not AIM_WHITELIST[playerID] then --whitelist check.
-                    if ((ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(GetLocalPed(), handle, 17) and LOScheck) or (not LOScheck)) and (PED.IS_PED_FACING_PED(GetLocalPed(), handle, FOV)) then --line-of-sight check :)
-                        tbl[#tbl+1] = handle --finally add it to the table of suitable players.
+function GetSuitableAimbotTarget(fov, fovcheck, dist, loscheck)
+    local ourped = GetLocalPed()
+    local distsq = dist * dist
+    local ourc = getEntityCoords(ourped)
+    local entTable = entities.get_all_peds_as_pointers()
+    local inRange = {}
+    for _, entity in pairs(entTable) do
+
+        local entpos = entities.get_position(entity)
+
+            if SYSTEM.VDIST2(ourc.x, ourc.y, ourc.z, entpos.x, entpos.y, entpos.z) <= distsq then --distance check
+
+                local handle = entities.pointer_to_handle(entity)
+                if (handle ~= ourped) then
+                    if (not PED.IS_PED_DEAD_OR_DYING(handle)) and (INTERIOR.GET_INTERIOR_FROM_ENTITY(handle) == 0) then --dead/interior check
+
+                        if fovcheck and PED.IS_PED_FACING_PED(ourped, handle, fov) or (not fovcheck) then --fov check
+
+                            if (PED.IS_PED_A_PLAYER(handle)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)]) then --whitelist, player check
+
+                                if (loscheck and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, handle, 17)) or (not loscheck) then --line-of-sight check
+                                    inRange[#inRange+1] = handle
+                                end
+                            end
+                        end
                     end
                 end
             end
-        end
+
     end
-    if tbl ~= nil then
-        local dist = 9999999999999
-        for _, v in pairs(tbl) do
-            if v ~= GetLocalPed() then
-                local tarcoords = getEntityCoords(v)
-                local e = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
-                if e < dist then
-                    dist = e
-                    suitable_player = v
-                end
+    local retplayer
+    if #inRange ~= 0 then
+        for _, ped in pairs(inRange) do
+            local d = 99999999999
+            local tc = getEntityCoords(ped)
+            local vidsti = SYSTEM.VDIST2(ourc.x, ourc.y, ourc.z, tc.x, tc.y, tc.z)
+            if vidsti < d then
+                retplayer = ped
+                d = vidsti
             end
         end
+        util.toast(GetPlayerName_ped(retplayer))
+        return retplayer
     end
-    util.toast("FOV: " .. tostring(FOV))
-    util.toast("LOSCHECK: " .. tostring(LOScheck))
-    util.toast("Range: " .. tostring(range))
-    if suitable_player ~= 0 then return suitable_player else return nil end
+    return nil
 end
 
-function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedEntities) --variation of GetClosestPlayerWithRange_Whitelist, that makes entities not returned if they are in the table.
+function ShootSingleBulletBetweenCoords(coords1, coords2, dmg, weaponhash, ownerped, audible, invisible, speed)
+    MISC.SHOOT_SINGLE_BULLET_BETWEEN_COORDS(
+        coords1.x, coords1.y, coords1.z,
+        coords2.x, coords2.y, coords2.z,
+        dmg, true, weaponhash, ownerped, audible, invisible, speed)
+end
+
+function ShootBulletAtPedBone(ped, boneID, dmg, weaponHash, speed, legitmode)
+    local bonecoords = PED.GET_PED_BONE_COORDS(ped, boneID, 0, 0, 0)
+    local ourped = GetLocalPed()
+    if legitmode and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, ped, 17) then
+        local ourhead = PED.GET_PED_BONE_COORDS(ourped, 12844, 0, 0, 0); local ourfront = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ourped, 0, 1, 0)
+        ourfront.z = ourhead.z --to shoot out of infront of our head
+        ShootSingleBulletBetweenCoords(ourfront, bonecoords, dmg, weaponHash, ourped, true, false, speed)
+    else
+        local bonecoordsabove = bonecoords; bonecoordsabove.z = bonecoordsabove.z + 0.3;
+        ShootSingleBulletBetweenCoords(bonecoordsabove, bonecoords, dmg, weaponHash, ourped, true, false, speed)
+    end
+end
+
+function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedEntities, inair) --variation of GetClosestPlayerWithRange_Whitelist, that makes entities not returned if they are in the table.
     local pedPointers = entities.get_all_peds_as_pointers()
     local rangesq = range * range
     local ourCoords = getEntityCoords(GetLocalPed())
@@ -494,9 +521,11 @@ function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedE
         if vdist <= rangesq then
             local handle = entities.pointer_to_handle(pedPointers[i])
             local playerID = NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)
-            if not AIM_WHITELIST[playerID] then --this is the whitelist check.
-                if not DoesTableContainValue(disallowedEntities, handle) then --this is the disallowed entities table check
-                    tbl[#tbl+1] = handle
+            if (inair and (ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(handle) >= 9)) or (not inair) then --air check
+                if not AIM_WHITELIST[playerID] then --this is the whitelist check.
+                    if not DoesTableContainValue(disallowedEntities, handle) then --this is the disallowed entities table check
+                        tbl[#tbl+1] = handle
+                    end
                 end
             end
         end
@@ -558,7 +587,7 @@ function GetClosestNonPlayerPedWithRange(range)
     end
 end
 
-function GetClosestNonPlayerPedWithRange_DisallowedEntities(range, disallowedEntities) --modified version of GetClosestNonPlayerPedWithRange that takes a table of disallowed entities (blacklisted peds)
+function GetClosestNonPlayerPedWithRange_DisallowedEntities(range, disallowedEntities, inair) --modified version of GetClosestNonPlayerPedWithRange that takes a table of disallowed entities (blacklisted peds)
     local pedPointers = entities.get_all_peds_as_pointers()
     local rangesq = range * range
     local ourCoords = getEntityCoords(GetLocalPed())
@@ -569,8 +598,10 @@ function GetClosestNonPlayerPedWithRange_DisallowedEntities(range, disallowedEnt
         local vdist = SYSTEM.VDIST2(ourCoords.x, ourCoords.y, ourCoords.z, tarcoords.x, tarcoords.y, tarcoords.z)
         if vdist <= rangesq then
             local handle = entities.pointer_to_handle(pedPointers[i])
-            if not DoesTableContainValue(disallowedEntities, handle) then
-                tbl[#tbl+1] = handle
+            if (inair and (ENTITY.GET_ENTITY_HEIGHT_ABOVE_GROUND(handle) >= 9)) or (not inair) then
+                if not DoesTableContainValue(disallowedEntities, handle) then
+                    tbl[#tbl+1] = handle
+                end
             end
         end
     end
@@ -628,6 +659,12 @@ function SpawnObjectOnPlayer(hash, pid)
     local ob = entities.create_object(hash, lc)
     STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
     return ob
+end
+
+function SpawnPickupOnPlayer(pickuphash, modelhash, value, pid)
+    RqModel(modelhash)
+    local pc = getEntityCoords(getPlayerPed(pid))
+    OBJECT.CREATE_PICKUP(pickuphash, pc.x, pc.y, pc.z, 99999, value, true, modelhash)
 end
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MODEL FUNCTIONS END ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
@@ -1157,9 +1194,7 @@ function RopeCrashLobby(pid)
     wait(1000)
     NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(veh); NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(ped)
     entities.delete_by_handle(veh); entities.delete_by_handle(ped)
-    local ropeptr = memory.alloc(4)
-    ropeptr = memory.write_int(rope)
-    PHYSICS.DELETE_ROPE(ropeptr)
+    PHYSICS.DELETE_CHILD_ROPE(rope)
     PHYSICS.ROPE_UNLOAD_TEXTURES()
 end
 
