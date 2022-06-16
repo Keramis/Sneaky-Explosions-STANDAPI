@@ -2,6 +2,8 @@
 
 #### A utility/trolling script for Stand and the Stand API.
 
+# (TO BE UPDATED IN VERSION 9.0)
+
 # Features
 
 ##### "N/D" = "Not Defined"
