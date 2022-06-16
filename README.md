@@ -2,7 +2,7 @@
 
 #### A utility/trolling script for Stand and the Stand API.
 
-# (TO BE UPDATED IN VERSION 8.0)
+# (TO BE UPDATED IN VERSION 9.0)
 
 # Features
 
