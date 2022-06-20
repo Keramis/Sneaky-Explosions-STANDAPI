@@ -475,13 +475,17 @@ Silent_Aimbot = {
     los_check = true,
     fov_check = true,
 
-    hash = 177293209 --heavy sniper mk2 hash
+    hash = 177293209, --heavy sniper mk2 hash
+    advanced = {
+        speed = -1
+    }
 }
 
 menu.toggle_loop(pvphelp, "Aimbot 2.0", {}, "", function ()
     if PED.IS_PED_SHOOTING(GetLocalPed()) then --main start, checking.
 
 
+        Silent_Aimbot.hash = WEAPON.GET_SELECTED_PED_WEAPON(GetLocalPed())
         local suitable = GetSuitableAimbotTarget(Silent_Aimbot.fov, Silent_Aimbot.fov_check,
             Silent_Aimbot.dist, Silent_Aimbot.los_check)
 
@@ -490,7 +494,7 @@ menu.toggle_loop(pvphelp, "Aimbot 2.0", {}, "", function ()
             for i, v in pairs(Silent_Aimbot.hitboxes) do
                 if (v.toggled) then
                     ShootBulletAtPedBone(suitable, v.hash, Silent_Aimbot.dmg,
-                        Silent_Aimbot.hash, -1)
+                        Silent_Aimbot.hash, Silent_Aimbot.advanced.speed)
                         if SE_Notifications then util.toast("Shot " .. i .. " of player " .. GetPlayerName_ped(suitable)) end
                         break;
                 else
@@ -517,6 +521,8 @@ menu.divider(aimbot_settings, "---Hitboxes---")
 menu.toggle(aimbot_settings, "Head", {"saimhead", "silenthead"}, "Toggle head hitbox.", function (toggle) Silent_Aimbot.hitboxes.head.toggled = toggle end)
 menu.toggle(aimbot_settings, "Spine/body", {"saimspine", "saimbody", "silentbody"}, "Toggle body hitbox.", function (toggle) Silent_Aimbot.hitboxes.spine.toggled = toggle end)
 menu.toggle(aimbot_settings, "Pelvis", {"saimpelvis", "silentpelvis"}, "Toggle pelvis hitbox.", function (toggle) Silent_Aimbot.hitboxes.pelvis.toggled = toggle end)
+menu.divider(aimbot_settings, "---Advanced---")
+menu.slider(aimbot_settings, "Set speed", {"silentspeed"}, "Advanced. Set speed of bullets. Default is -1.", -1, 2147483647, -1, 10, function (v) Silent_Aimbot.advanced.speed = v end)
 
 --GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS --for shooting the kneecaps
 --https://wiki.gtanet.work/index.php?title=Bones
