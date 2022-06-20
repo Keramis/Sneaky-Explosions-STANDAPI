@@ -458,7 +458,7 @@ function GetSuitableAimbotTarget(fov, fovcheck, dist, loscheck)
                 if (handle ~= ourped) then
                     if (not PED.IS_PED_DEAD_OR_DYING(handle)) and (INTERIOR.GET_INTERIOR_FROM_ENTITY(handle) == 0) then --dead/interior check
 
-                        if fovcheck and PED.IS_PED_FACING_PED(ourped, handle, fov) or (not fovcheck) then --fov check
+                        if (fovcheck and PED.IS_PED_FACING_PED(ourped, handle, fov)) or (not fovcheck) then --fov check
 
                             if (PED.IS_PED_A_PLAYER(handle)) and (not AIM_WHITELIST[NETWORK.NETWORK_GET_PLAYER_INDEX_FROM_PED(handle)]) then --whitelist, player check
 
@@ -473,9 +473,9 @@ function GetSuitableAimbotTarget(fov, fovcheck, dist, loscheck)
 
     end
     local retplayer
+    local d = 99999999999
     if #inRange ~= 0 then
         for _, ped in pairs(inRange) do
-            local d = 99999999999
             local tc = getEntityCoords(ped)
             local vidsti = SYSTEM.VDIST2(ourc.x, ourc.y, ourc.z, tc.x, tc.y, tc.z)
             if vidsti < d then
