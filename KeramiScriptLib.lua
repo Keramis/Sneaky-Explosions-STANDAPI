@@ -483,7 +483,6 @@ function GetSuitableAimbotTarget(fov, fovcheck, dist, loscheck)
                 d = vidsti
             end
         end
-        util.toast(GetPlayerName_ped(retplayer))
         return retplayer
     end
     return nil
@@ -496,17 +495,13 @@ function ShootSingleBulletBetweenCoords(coords1, coords2, dmg, weaponhash, owner
         dmg, true, weaponhash, ownerped, audible, invisible, speed)
 end
 
-function ShootBulletAtPedBone(ped, boneID, dmg, weaponHash, speed, legitmode)
+function ShootBulletAtPedBone(ped, boneID, dmg, weaponHash, speed)
     local bonecoords = PED.GET_PED_BONE_COORDS(ped, boneID, 0, 0, 0)
     local ourped = GetLocalPed()
-    if legitmode and ENTITY.HAS_ENTITY_CLEAR_LOS_TO_ENTITY(ourped, ped, 17) then
-        local ourhead = PED.GET_PED_BONE_COORDS(ourped, 12844, 0, 0, 0); local ourfront = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ourped, 0, 1, 0)
-        ourfront.z = ourhead.z --to shoot out of infront of our head
-        ShootSingleBulletBetweenCoords(ourfront, bonecoords, dmg, weaponHash, ourped, true, false, speed)
-    else
-        local bonecoordsabove = bonecoords; bonecoordsabove.z = bonecoordsabove.z + 0.3;
-        ShootSingleBulletBetweenCoords(bonecoordsabove, bonecoords, dmg, weaponHash, ourped, true, false, speed)
-    end
+
+    local ourhead = PED.GET_PED_BONE_COORDS(ourped, 12844, 0, 0, 0); local ourfront = ENTITY.GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(ourped, 0, 1, 0)
+    ourfront.z = ourhead.z --to shoot out of infront of our head
+    ShootSingleBulletBetweenCoords(ourfront, bonecoords, dmg, weaponHash, ourped, true, false, speed)
 end
 
 function GetClosestPlayerWithRange_Whitelist_DisallowEntities(range, disallowedEntities, inair) --variation of GetClosestPlayerWithRange_Whitelist, that makes entities not returned if they are in the table.
