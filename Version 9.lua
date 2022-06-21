@@ -19,7 +19,7 @@ require("KeramiScriptLang")
 
 util.keep_running()
 
-local scriptName = "KeramisScript V.7.0"
+local scriptName = "KeramisScript V.9.0"
 
 local menuroot = menu.my_root()
 local menuAction = menu.action
