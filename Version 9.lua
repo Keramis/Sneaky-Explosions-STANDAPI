@@ -59,21 +59,19 @@ onStartup()
 
 local lobbyFeats = menu.list(menuroot, KER_LANG_TABLE[1], {}, "")
 
-local expFeats = menu.list(lobbyFeats, KER_LANG_TABLE[2], {}, "")
+menu.divider(lobbyFeats, KER_LANG_TABLE[4])
 
-menuAction(expFeats, KER_LANG_TABLE[3], {"allsuicide"}, "Makes everyone commit suicide, with an explosion.", function()
+menuAction(lobbyFeats, KER_LANG_TABLE[3], {"allsuicide"}, "Makes everyone commit suicide, with an explosion.", function()
     EveryoneExplodeSuicides()
 end)
 
-menu.divider(lobbyFeats, KER_LANG_TABLE[4])
-
 -----------------------------------------------------------------------------------------------------------------
 
-Pizzaall = menuAction(lobbyFeats, KER_LANG_TABLE[5], {"plagueall"}, "Blocked by most menus.", function ()
+local lobbyremove = menu.list(lobbyFeats, KER_LANG_TABLE[7], {}, "")
+
+Pizzaall = menuAction(lobbyremove, KER_LANG_TABLE[5], {"plagueall"}, "Blocked by most menus.", function ()
     menu.show_warning(Pizzaall, 1, KER_LANG_TABLE[6], PizzaCAll)
 end)
-
-local lobbyremove = menu.list(lobbyFeats, KER_LANG_TABLE[7], {}, "")
 
 menuAction(lobbyremove, KER_LANG_TABLE[8], {"allfdeath"}, "Will probably not work on some/most menus. A 'delayed kick' of sorts.", function ()
     FreemodeDeathAll()
@@ -83,17 +81,6 @@ TXC_SLOW = false
 
 menuAction(lobbyremove, KER_LANG_TABLE[9], {"allaiokick", "allaiok"}, "Will probably not work on some menus.", function ()
     AIOKickAll()
-end)
-
-menuAction(lobbyremove, "Breakup Kick All", {"ker_allbreakup"}, "", function()
-    for i = 0, 31 do
-        if i ~= players.user() and NETWORK.NETWORK_IS_PLAYER_CONNECTED(i) then
-            local name = NETWORK.NETWORK_PLAYER_GET_NAME(i)
-            menu.trigger_commands("breakup " .. name)
-            wait()
-        end
-        wait()
-    end
 end)
 
 menuToggle(lobbyremove, KER_LANG_TABLE[10], {}, "", function (on)
@@ -1749,22 +1736,6 @@ local function playerActionsSetup(pid) --set up player actions (necessary for ea
     local playerWeapons = menu.list(playerMain, KER_LANG_TABLE[151], {}, "") -- weapons parent
     local playerTools = menu.list(playerMain, KER_LANG_TABLE[152], {}, "") --tools parent
     local playerOtherTrolling = menu.list(playerMain, KER_LANG_TABLE[153], {}, "")
-    
-    menu.toggle_loop(playerMain, "Teleport vehicle u are looking at", {}, "", function ()
-        if PAD.IS_CONTROL_JUST_PRESSED(0, 54) then -- 54 || INPUT_WEAPON_SPECIAL_TWO || E
-            local entpointer = memory.alloc()
-            util.toast("Allocated memory.")
-            if PLAYER.GET_ENTITY_PLAYER_IS_FREE_AIMING_AT(players.user(), entpointer) then
-                local handle = memory.read_int(entpointer)
-                NETWORK.NETWORK_REQUEST_CONTROL_OF_ENTITY(handle)
-                if ENTITY.IS_ENTITY_A_PED(handle) then handle = PED.GET_VEHICLE_PED_IS_IN(handle, false) end
-                local playercoords = getEntityCoords(getPlayerPed(pid))
-                ENTITY.SET_ENTITY_COORDS_NO_OFFSET(handle, playercoords.x, playercoords.y, playercoords.z, false, false, false)
-            end
-            util.toast("Freed memory.")
-            memory.free(entpointer)
-        end
-    end)
 
     --suicides
 
