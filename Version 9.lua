@@ -14,7 +14,6 @@
 util.require_natives(1651208000)
 require("Universal_ped_list")
 require("Universal_objects_list")
-require("Universal_PickupTable")
 require("KeramiScriptLib")
 require("KeramiScriptLang")
 
