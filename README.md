@@ -4,6 +4,8 @@
 
 ## This was updated in the release of Version 9 of this script.
 
+Please, visit [the wiki here]([url](https://github.com/Keramis/Sneaky-Explosions-STANDAPI/wiki/Introduction)) instead of reading the readme for a features list.
+
 ## How to interperet the readme:
 - [x] = Action
 - [t] = Toggle
