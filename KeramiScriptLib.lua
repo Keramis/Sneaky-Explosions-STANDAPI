@@ -48,6 +48,11 @@ function GetPlayerName_pid(pid)
     return playerName
 end
 
+function GetEntityTypeString(handle)
+    local t = ENTITY.GET_ENTITY_TYPE(handle)
+    if (t == 1) then return "Ped" elseif (t == 2) then return "Vehicle" elseif (t == 3) then return "Object" else return nil end
+end
+
 --thank you to: https://easings.net for the functions!
 function EaseOutCubic(x)
     return 1 - ((1-x) ^ 3)
@@ -638,6 +643,13 @@ function RqModel (hash)
     if not STREAMING.HAS_MODEL_LOADED(hash) then
         util.toast("Tried for 1 second, couldn't load this specified model!")
     end
+end
+
+function SpawnObjectAtCoords(hash, v3Coords)
+    RqModel(hash)
+    local object = entities.create_object(hash, v3Coords)
+    STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
+    return object
 end
 
 function SpawnPedOnPlayer(hash, pid)
