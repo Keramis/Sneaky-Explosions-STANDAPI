@@ -284,7 +284,7 @@ function FastNet(entity, playerID)
     wait(10)
     ENTITY.SET_ENTITY_AS_MISSION_ENTITY(entity, true, false)
     wait(10)
-    ENTITY._SET_ENTITY_CLEANUP_BY_ENGINE(entity, false)
+    ENTITY.SET_ENTITY_SHOULD_FREEZE_WAITING_ON_COLLISION(entity, false)
     wait(10)
     if ENTITY.IS_ENTITY_AN_OBJECT(entity) then
         NETWORK.OBJ_TO_NET(entity)
@@ -325,7 +325,7 @@ function NetIt(entity, playerID)
     wait(10)
     ENTITY.SET_ENTITY_AS_MISSION_ENTITY(entity, true, false)
     wait(10)
-    ENTITY._SET_ENTITY_CLEANUP_BY_ENGINE(entity, false)
+    ENTITY.SET_ENTITY_SHOULD_FREEZE_WAITING_ON_COLLISION(entity, false)
     wait(10)
     if ENTITY.IS_ENTITY_AN_OBJECT(entity) then
         NETWORK.OBJ_TO_NET(entity)
@@ -627,6 +627,60 @@ function GetClosestNonPlayerPedWithRange_DisallowedEntities(range, disallowedEnt
     end
 end
 
+function ScanHandleAndCoordsOfPed(joaatHash)
+    local peds = entities.get_all_peds_as_pointers()
+    for _, ped in pairs(peds) do
+        if entities.get_model_hash(ped) == joaatHash then
+            local handle = entities.pointer_to_handle(ped)
+            local pos = getEntityCoords(handle)
+            return handle, pos
+        end
+    end
+    return nil, nil
+end
+
+function ScanHandleAndCoordsOfModel(joaatHash)
+    local objs = entities.get_all_objects_as_pointers()
+    for _, obj in pairs(objs) do
+        if entities.get_model_hash(obj) == joaatHash then
+            local handle = entities.pointer_to_handle(obj)
+            local pos = getEntityCoords(handle)
+            return handle, pos
+        end
+    end
+    return nil, nil
+end
+
+function ScanHandleAndCoordsOfModelReturnFirst(hashes)
+    local objs = entities.get_all_objects_as_pointers()
+    for idx, model in ipairs(hashes) do
+        for _, obj in pairs(objs) do
+            if entities.get_model_hash(obj) == model then
+                local handle = entities.pointer_to_handle(obj)
+                local pos = getEntityCoords(handle)
+                return handle, pos
+            end
+        end
+    end
+    return nil, nil
+end
+
+function ScanHandleAndCoordsOfModels(hashes)
+    --not even sure if this function works lmfao but it should :(
+    local objs = entities.get_all_objects_as_pointers()
+    local ret = {handles = {}, positions = {}}
+    for idx, model in ipairs(hashes) do
+        for _, obj in pairs(objs) do
+            if entities.get_model_hash(obj) == model then
+                local handle = entities.pointer_to_handle(obj)
+                ret["handles"][#ret["handles"]+1] = handle
+                ret["positions"][#ret["positions"]+1] = getEntityCoords(handle)
+            end
+        end
+    end
+    return ret
+end
+
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- POSITION FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
 
 ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ---- MODEL FUNCTIONS START ---- >> ---- ---- >> ---- ---- >> ---- ---- >> ----
@@ -650,6 +704,13 @@ function SpawnObjectAtCoords(hash, v3Coords)
     local object = entities.create_object(hash, v3Coords)
     STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
     return object
+end
+
+function SpawnPedAtCoords(hash, v3Coords)
+    RqModel(hash)
+    local entity = entities.create_ped(26, hash, v3Coords, 0)
+    STREAMING.SET_MODEL_AS_NO_LONGER_NEEDED(hash)
+    return entity
 end
 
 function SpawnPedOnPlayer(hash, pid)
